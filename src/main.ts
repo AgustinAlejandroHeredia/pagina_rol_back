@@ -2,9 +2,27 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 
+// Config
+import { ConfigService } from "@nestjs/config";
+
 async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
+
+  const configService = app.get(ConfigService)
+  const frontendUrl = configService.get<string>('FRONT_URL')
+  console.log("FRONT URL : ", frontendUrl)
+
+  // Enable CORS
+  app.enableCors({
+    origin: frontendUrl,
+    credentials: true,
+    allowedHeaders: [
+      'Authorization',
+      'Content-Type'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  })
 
   const config = new DocumentBuilder()
     .setTitle('API Pagina Rol')

@@ -35,4 +35,11 @@ export class AppController {
   getPermission(): string {
     return this.appService.getPermission()
   }
+
+  @UseGuards(AuthGuard('jwt'), PermissionGuard)
+  @Permissions('read:campaign')
+  @Get('/prueba_conexion')
+  getConexion(): string {
+    return this.appService.getConexion()
+  }
 }

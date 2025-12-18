@@ -19,4 +19,8 @@ export class AppService {
     return 'Recurso solo con permiso, se puede ver la campaña'
   }
 
+  getConexion(): string {
+    return 'Conexion validada, permisos aceptados'
+  }
+
 }
