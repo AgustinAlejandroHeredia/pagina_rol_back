@@ -10,6 +10,8 @@ import { MongooseModule } from '@nestjs/mongoose'
 
 // CONFIG
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MapelemModule } from './mapelem/mapelem.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     AuthModule,
     DbModule,
     CampaignModule,
+    MapelemModule,
+    UserModule,
 
   ],
 

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 
 // DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 
 // MONGOOSE
 import { Model } from 'mongoose'
+import { InjectModel } from '@nestjs/mongoose';
 
 // SCHEMAS
 import { Campaign, CampaignSchema } from 'src/schemas/Campaign.schema';
@@ -17,9 +17,8 @@ export class CampaignService {
     constructor(@InjectModel(Campaign.name) private campaignModel: Model<Campaign>){}
 
     async createCampaign(createCampaignDto: CreateCampaignDto){
-        console.log('RECIBO ESTO EN SERVICE : ', createCampaignDto)
+        // como default el schema inica la lista de usuarios vacia
         const newCampaign = new this.campaignModel(createCampaignDto)
-        console.log('CAMPAÑA NUEVA CREADA : ', newCampaign)
         return newCampaign.save()
     }
 
