@@ -21,7 +21,7 @@ async function bootstrap() {
       'Authorization',
       'Content-Type'
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    methods: 'GET,POST,PUT,DELETE,PATCH',
   })
 
   const config = new DocumentBuilder()
@@ -36,7 +36,6 @@ async function bootstrap() {
       'access-token'
     )
     .build()
-
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 

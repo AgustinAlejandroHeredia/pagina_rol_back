@@ -8,3 +8,7 @@ AUTH0_AUDIENCE=https://dom-auth0-configured-on-auth0/
 - Conexion con frontend -
 
 FRONT_URL=frontend_base_url
+
+- Mongo Atlas -
+
+MONGO_ATLAS_URL=connection_url_given_by_mongoatlas
