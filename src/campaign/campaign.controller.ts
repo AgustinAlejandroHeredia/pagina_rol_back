@@ -41,17 +41,6 @@ export class CampaignController {
         return this.campaignService.createCampaign(userId, body.name, body.description, body.system)
     }
 
-    // Obtener una campaña dada su id
-    @UseGuards(AuthGuard('jwt'), PermissionGuard)
-    @Permissions('read:campaign')
-    @Get(':id')
-    async getCampaignById(@Param('campaignId') campaignId: string){
-        const result = await this.campaignService.getCampaignById(campaignId)
-        console.log("RESULTADO getCampaignById : ", JSON.stringify(result, null, 2))
-        return result
-    }
-
-
     // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token)
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -69,8 +58,19 @@ export class CampaignController {
     @Permissions('read:campaign')
     @Get('/get_user_campaings_home')
     async getUserCampaingsHome(@User('userId') userId: string) {
+        console.log("USER ID : ", userId)
         const result = await this.campaignService.getUserCampaingsHome(userId)
         console.log("RESULTADO getUserCampaingsHome : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
+    // Obtener una campaña dada su id
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get(':id')
+    async getCampaignById(@Param('campaignId') campaignId: string){
+        const result = await this.campaignService.getCampaignById(campaignId)
+        console.log("RESULTADO getCampaignById : ", JSON.stringify(result, null, 2))
         return result
     }
 
