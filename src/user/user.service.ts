@@ -21,4 +21,16 @@ export class UserService {
         return newUser.save()
     }
 
+    async getUserByMongoId(mongo_id: string) {
+        return this.userModel
+            .findById(mongo_id)
+    }
+
+    async getUserByAuth0Id(auth0_id: string) {
+        return this.userModel
+            .findOne({ auth0_id })
+            .lean()
+            .exec()
+    }
+
 }

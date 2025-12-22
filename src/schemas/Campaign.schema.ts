@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
 import mongoose, { Document } from "mongoose"
 
-// Usuarios
-import { User } from "./User.schema";
+// Campaing.Usuarios
+import { CampaignUser } from "./CampaingUser.schema";
 
 // MapElems
 import { MapElem } from "./MapElem.schema";
@@ -13,13 +13,12 @@ export class Campaign extends Document {
     @Prop({required:true})
     name:string;
 
-    // lista de IDs de usuarios
+    // lista de usuarios dentro de campaing (tiene id_mongo id_auth0)
     @Prop({
-        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-        required: false,
+        type: [CampaignUser],
         default: []
     })
-    users: User[];
+    users: CampaignUser[];
 
     // lista de IDs de elementos de mapa (mapelems)
     @Prop({

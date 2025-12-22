@@ -4,6 +4,10 @@ export class CreateUserDto {
 
     @IsString()
     @IsNotEmpty()
+    auth0_id: string
+
+    @IsString()
+    @IsNotEmpty()
     name: string
 
     @IsString()
@@ -13,6 +17,5 @@ export class CreateUserDto {
     @IsString()
     @IsNotEmpty()
     alias: string
-
 
 }

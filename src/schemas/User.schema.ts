@@ -5,6 +5,9 @@ import { Document } from "mongoose"
 export class User extends Document {
 
     @Prop({required:true})
+    auth0_id:string;
+
+    @Prop({required:true})
     name:string;
 
     @Prop({required:true})
