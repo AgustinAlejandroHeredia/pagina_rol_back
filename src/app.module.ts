@@ -12,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MapelemModule } from './mapelem/mapelem.module';
 import { UserModule } from './user/user.module';
+import { InviteModule } from './invite/invite.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { UserModule } from './user/user.module';
     CampaignModule,
     MapelemModule,
     UserModule,
+    InviteModule,
 
   ],
 

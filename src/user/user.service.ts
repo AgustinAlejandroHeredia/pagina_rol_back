@@ -33,4 +33,11 @@ export class UserService {
             .exec()
     }
 
+    async userEmailExists(email: string) {
+        return this.userModel
+            .findOne({ email })
+            .lean()
+            .exec()
+    }
+
 }

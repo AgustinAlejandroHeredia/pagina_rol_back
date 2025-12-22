@@ -1,9 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { CampaignService } from './campaign.service';
+import { CreateCampaignDto } from './dto/create-campaign.dto';
 
 // MONGOOSE
 import { MongooseModule } from '@nestjs/mongoose';
-import { CreateCampaignDto } from './dto/create-campaign.dto';
 
 // SWAGGER
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
@@ -22,7 +22,6 @@ import { UserService } from 'src/user/user.service';
 export class CampaignController {
     constructor(
         private readonly campaignService: CampaignService,
-        private readonly userService: UserService
     ) {}
 
     // CREACION
@@ -32,35 +31,26 @@ export class CampaignController {
     @ApiBody({ type: CreateCampaignDto })
     async createCampaign(
         @User('userId') userId: string, 
-        @Body() body: { name: string, description: string, system:string } ) 
-    {
+        @Body() body: { name: string, description: string, system:string } 
+    ) {
 
         if(!body.name || !body.description || !body.system){
             throw new BadRequestException("Faltan uno o mas campos requeridos (name: string, description: string, system: string)")
         }
 
-        const dungeonMasterResult = await this.userService.getUserByAuth0Id(userId)
-        if(!dungeonMasterResult){
-            throw new BadRequestException("Error en autenticacion")
-        }
-
-        const dungeonMaster = {
-            auth0_id: dungeonMasterResult.auth0_id,
-            mongo_id: dungeonMasterResult._id.toString(),
-            alias: "Dungeon Master"
-        }
-
-        const campaignData : CreateCampaignDto = {
-            name: body.name,
-            description: body.description,
-            system: body.system,
-            dungeonMaster,
-            users: [dungeonMaster]
-        }
-
-        console.log('BODY DE CREATE CAMPAIGN -> ', campaignData)
-        return this.campaignService.createCampaign(campaignData)
+        return this.campaignService.createCampaign(userId, body.name, body.description, body.system)
     }
+
+    // Obtener una campaña dada su id
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get(':id')
+    async getCampaignById(@Param('campaignId') campaignId: string){
+        const result = await this.campaignService.getCampaignById(campaignId)
+        console.log("RESULTADO getCampaignById : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
 
     // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token)
     @ApiBearerAuth('access-token') // Para swagger

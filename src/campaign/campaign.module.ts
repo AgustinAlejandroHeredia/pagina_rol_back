@@ -16,7 +16,7 @@ import { Campaign, CampaignSchema } from 'src/schemas/Campaign.schema';
       name: Campaign.name,
       schema: CampaignSchema,
     }]),
-    UserModule
+    UserModule,
   ],
 
   controllers: [CampaignController],

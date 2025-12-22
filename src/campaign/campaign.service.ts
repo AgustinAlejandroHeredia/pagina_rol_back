@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 // DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -12,16 +12,51 @@ import { Campaign, CampaignSchema } from 'src/schemas/Campaign.schema';
 import { ReturningStatementNotSupportedError } from 'typeorm'
 import { throws } from 'assert';
 
+// SERVICES
+import { UserService } from 'src/user/user.service';
+
 @Injectable()
 export class CampaignService {
 
-    constructor(@InjectModel(Campaign.name) private campaignModel: Model<Campaign>){}
+    constructor(
+        @InjectModel(Campaign.name) private campaignModel: Model<Campaign>,
+        private readonly userService: UserService,
+    ){}
 
     // CREAR CAMPAING
-    async createCampaign(createCampaignDto: CreateCampaignDto) {
+    async createCampaign(userId: string, name: string, description: string, system: string) {
+
+        const dungeonMasterResult = await this.userService.getUserByAuth0Id(userId)
+        if(!dungeonMasterResult){
+            throw new BadRequestException("Error en autenticacion")
+        }
+
+        const dungeonMaster = {
+            auth0_id: dungeonMasterResult.auth0_id,
+            mongo_id: dungeonMasterResult._id.toString(),
+            alias: "Dungeon Master"
+        }
+
+        const campaignData : CreateCampaignDto = {
+            name: name,
+            description: description,
+            system: system,
+            dungeonMaster,
+            users: [dungeonMaster]
+        }
+
+        console.log('BODY DE CREATE CAMPAIGN -> ', campaignData)
+
         // como default el schema inica la lista de usuarios vacia
-        const newCampaign = new this.campaignModel(createCampaignDto)
+        const newCampaign = new this.campaignModel(campaignData)
         return newCampaign.save()
+    }
+
+    async getCampaignById(campaignId: string){
+        return this.campaignModel
+            .find({ "_id": campaignId })
+            .lean()
+            .exec()
     }
 
     // OBTENER CAMPAÑAS DE UN JUGADOR (busca por auth0_id)
