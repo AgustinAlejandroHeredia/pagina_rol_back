@@ -83,7 +83,7 @@ export class CampaignService {
                 },
                 {
                     $project: {
-                        _id: 0,
+                        _id: 1,
                         campaignName: 1,
                         players: 1
                     }

@@ -13,6 +13,15 @@ export class Campaign extends Document {
     @Prop({required:true})
     name:string;
 
+    @Prop({required:true})
+    description:string
+
+    @Prop({required:true})
+    dungeonMaster: CampaignUser
+
+    @Prop({required:true})
+    system: string
+
     // lista de usuarios dentro de campaing (tiene id_mongo id_auth0)
     @Prop({
         type: [CampaignUser],

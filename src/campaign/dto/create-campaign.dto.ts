@@ -20,6 +20,17 @@ export class CreateCampaignDto {
     @IsNotEmpty()
     name: string
 
+    @IsString()
+    @IsNotEmpty()
+    description: string
+
+    @IsNotEmpty()
+    dungeonMaster: CampaignUserDto
+
+    @IsString()
+    @IsNotEmpty()
+    system:string
+
     // lista de IDs de usuarios ( id_mongo, id_auth0 )
     @IsOptional()
     @IsArray()
