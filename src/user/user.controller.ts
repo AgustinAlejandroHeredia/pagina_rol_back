@@ -38,17 +38,13 @@ export class UserController {
             throw new BadRequestException("Faltan uno o mas campos requeridos (name: string, email: string)")
         }
 
-        const result = await this.userService.getUserByAuth0Id(userId)
-        if(!result){
-            // Crea el usuario
-            const user : CreateUserDto = {
-                name: body.name,
-                email: body.email,
-                auth0_id: userId
-            }
-            this.userService.createUser(user)
-        }
-        return true
+        await this.userService.findOrCreateUser(
+            userId,
+            body.name,
+            body.email,
+        )
+
+        return { ok: true}
     }
 
     // Elimino estos endpoints por ahora

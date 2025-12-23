@@ -26,6 +26,27 @@ export class UserService {
             .findById(mongo_id)
     }
 
+    async findOrCreateUser(
+        auth0_id: string,
+        name: string,
+        email: string,
+    ) {
+        return this.userModel.findOneAndUpdate(
+            { auth0_id },
+            {
+            $setOnInsert: {
+                auth0_id,
+                name,
+                email,
+            },
+            },
+            {
+            upsert: true,
+            new: true,
+            },
+        ).exec();
+    }
+
     async getUserByAuth0Id(auth0_id: string) {
         return this.userModel
             .findOne({ auth0_id })
