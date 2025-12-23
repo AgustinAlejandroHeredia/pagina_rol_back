@@ -8,10 +8,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 // SWAGGER
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 
-// PERMISOS / JWT
+// PERMISSIONS, DECORATORS, GUARDS
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from 'src/auth/permissions.guard';
 import { Permissions } from 'src/auth/permissions.decorator';
+import { User } from 'src/auth/user.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -23,6 +24,17 @@ export class UserController {
     async createUser(@Body() createData: CreateUserDto){
         console.log('BODY DE CREATE USER -> ', createData)
         return this.userService.createUser(createData)
+    }
+
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get("/userExists")
+    async userExists(@User('userId') userId: string) {
+        const result = await this.userService.getUserByAuth0Id(userId)
+        if(!result){
+            return false
+        }
+        return true
     }
 
     // Elimino estos endpoints por ahora

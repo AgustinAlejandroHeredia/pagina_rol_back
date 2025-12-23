@@ -14,8 +14,4 @@ export class CreateUserDto {
     @IsNotEmpty()
     email: string
 
-    @IsString()
-    @IsNotEmpty()
-    alias: string
-
 }
