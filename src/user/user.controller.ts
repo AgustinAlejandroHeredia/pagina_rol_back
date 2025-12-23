@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -28,11 +28,25 @@ export class UserController {
 
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
-    @Get("/userExists")
-    async userExists(@User('userId') userId: string) {
+    @Post("/userExists")
+    async userExists(
+        @User('userId') userId: string,
+        @Body() body: { name: string, email: string }
+    ) {
+
+        if(!body.name.trim() || !body.email.trim()){
+            throw new BadRequestException("Faltan uno o mas campos requeridos (name: string, email: string)")
+        }
+
         const result = await this.userService.getUserByAuth0Id(userId)
         if(!result){
-            return false
+            // Crea el usuario
+            const user : CreateUserDto = {
+                name: body.name,
+                email: body.email,
+                auth0_id: userId
+            }
+            this.userService.createUser(user)
         }
         return true
     }
