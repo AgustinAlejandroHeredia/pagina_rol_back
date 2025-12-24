@@ -126,4 +126,9 @@ export class CampaignService {
             ])
     }
 
+    async getCampaign(campaign_id: string) {
+        return this.campaignModel
+            .findOne({ _id: campaign_id })
+    }
+
 }

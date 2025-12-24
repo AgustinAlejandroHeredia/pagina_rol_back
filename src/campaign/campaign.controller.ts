@@ -41,17 +41,6 @@ export class CampaignController {
         return this.campaignService.createCampaign(userId, body.name, body.description, body.system)
     }
 
-    // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token)
-    @ApiBearerAuth('access-token') // Para swagger
-    @UseGuards(AuthGuard('jwt'), PermissionGuard)
-    @Permissions('read:campaign')
-    @Get('/get_user_campaings')
-    async getUserCampaings(@User('userId') userId: string) {
-        const result = await this.campaignService.getUserCampaings(userId)
-        console.log("RESULTADO getUserCampaings : ", JSON.stringify(result, null, 2))
-        return result
-    }
-
     // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token) PARA HOME (request compuesta)
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -71,6 +60,31 @@ export class CampaignController {
     async getCampaignById(@Param('campaignId') campaignId: string){
         const result = await this.campaignService.getCampaignById(campaignId)
         console.log("RESULTADO getCampaignById : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
+    // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token)
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('/get_user_campaings')
+    async getUserCampaings(@User('userId') userId: string) {
+        const result = await this.campaignService.getUserCampaings(userId)
+        console.log("RESULTADO getUserCampaings : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
+    // Pedir una campaña pasando su id especifica
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('/get_campaign')
+    async getCampaign(
+        @User('useId') userId: string, 
+        @Param('campaign_id') campaign_id: string, 
+    ) {
+        const result = await this.campaignService.getCampaign(campaign_id)
+        console.log("RESULTADO getCampaign : ", JSON.stringify(result, null, 2))
         return result
     }
 

@@ -6,7 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { MongooseModule } from '@nestjs/mongoose';
 
 // SWAGGER
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 // PERMISSIONS, DECORATORS, GUARDS
 import { AuthGuard } from '@nestjs/passport';
@@ -45,6 +45,14 @@ export class UserController {
         )
 
         return { ok: true}
+    }
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Post("/admin/getUsers")
+    async getUsers(){
+        return "Exito"
     }
 
     // Elimino estos endpoints por ahora
