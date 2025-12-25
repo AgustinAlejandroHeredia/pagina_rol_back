@@ -4,7 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 
 // MONGOOSE
-import { Model } from 'mongoose'
+import { Model, Types } from 'mongoose'
 import { InjectModel } from '@nestjs/mongoose';
 
 // SCHEMAS
@@ -54,7 +54,7 @@ export class CampaignService {
 
     async getCampaignById(campaignId: string){
         return this.campaignModel
-            .find({ "_id": campaignId })
+            .findById({ "_id": campaignId })
             .lean()
             .exec()
     }
@@ -124,11 +124,6 @@ export class CampaignService {
                     }
                 }
             ])
-    }
-
-    async getCampaign(campaign_id: string) {
-        return this.campaignModel
-            .findOne({ _id: campaign_id })
     }
 
 }

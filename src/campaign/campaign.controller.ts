@@ -54,10 +54,12 @@ export class CampaignController {
     }
 
     // Obtener una campaña dada su id
+    @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
-    @Get(':id')
+    @Get(':campaignId')
     async getCampaignById(@Param('campaignId') campaignId: string){
+        console.log("CAMPAIGN ID : ", campaignId)
         const result = await this.campaignService.getCampaignById(campaignId)
         console.log("RESULTADO getCampaignById : ", JSON.stringify(result, null, 2))
         return result
@@ -71,20 +73,6 @@ export class CampaignController {
     async getUserCampaings(@User('userId') userId: string) {
         const result = await this.campaignService.getUserCampaings(userId)
         console.log("RESULTADO getUserCampaings : ", JSON.stringify(result, null, 2))
-        return result
-    }
-
-    // Pedir una campaña pasando su id especifica
-    @ApiBearerAuth('access-token') // Para swagger
-    @UseGuards(AuthGuard('jwt'), PermissionGuard)
-    @Permissions('read:campaign')
-    @Get('/get_campaign')
-    async getCampaign(
-        @User('useId') userId: string, 
-        @Param('campaign_id') campaign_id: string, 
-    ) {
-        const result = await this.campaignService.getCampaign(campaign_id)
-        console.log("RESULTADO getCampaign : ", JSON.stringify(result, null, 2))
         return result
     }
 
