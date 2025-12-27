@@ -76,4 +76,29 @@ export class CampaignController {
         return result
     }
 
+    // Pide los usuarios de una campaña dada la id de una campaña
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('/get_campaign_users/:campaignId')
+    async getUsersCampaign(@Param('campaignId') campaignId: string){
+        const result = await this.campaignService.getUsersCampaign(campaignId)
+        console.log("RESULTADO getUsersCampaign ; ", JSON.stringify(result, null, 2))
+        return result
+    }
+
+    // Dada la id de una campaña, pregunta si el user (token) es dm de la campaña que esta consultando
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('/is_dungeon_master/:campaignId')
+    async isDungeonMaster(
+        @Param('campaignId') campaignId: string,
+        @User('userId') userId: string,
+    ) {
+        const result = await this.campaignService.isDungeonMaster(campaignId, userId)
+        console.log("RESULTADO isDungeonMaster : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
 }

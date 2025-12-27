@@ -126,4 +126,53 @@ export class CampaignService {
             ])
     }
 
+    async getUsersCampaign(campaign_id: string) {
+        return this.campaignModel
+            .aggregate([
+                {
+                    // filtro por esta campaña
+                    $match: {
+                        _id: new Types.ObjectId(campaign_id),
+                    },
+                },
+                {
+                    // separo cada user del array que me devuelve
+                    $unwind: '$users',
+                },
+                {
+                    // lookup para buscar en la coleccion de usuarios
+                    $lookup: {
+                        from: 'users', // nombre REAL de la colección
+                        localField: 'users.mongo_id',
+                        foreignField: '_id',
+                        as: 'userData',
+                    },
+                },
+                {
+                    // separo el array userData
+                    $unwind: '$userData',
+                },
+                {
+                    // proyeccion final
+                    $project: {
+                        _id: 0,
+                        name: '$userData.name',
+                        alias: '$users.alias',
+                    },
+                },
+            ])
+    }
+
+    async isDungeonMaster(campaign_id: string, auth0_id: string): Promise<boolean> {
+        const campaign = await this.campaignModel
+            .findOne(
+                {
+                    _id: campaign_id,
+                    'dungeonMaster.auth0_id': auth0_id,
+                },
+                { _id: 1 },
+            )
+        return !!campaign
+    }
+
 }
