@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateMapElemDto } from './dto/create-mapelem.dto';
 
 // MONGOOSE
-import { Model } from 'mongoose'
+import { Model, Types } from 'mongoose'
 import { InjectModel } from '@nestjs/mongoose';
 
 // SCHEMAS
@@ -16,8 +16,11 @@ export class MapelemService {
 
     constructor(@InjectModel(MapElem.name) private mapElemModel: Model<MapElem>){}
 
-    async createMapElem(createMapElemDto: CreateMapElemDto){
-        const newMapElem = new this.mapElemModel(createMapElemDto)
+    async createMapElem(createMapElemDto: CreateMapElemDto, campaignId:string){
+        const newMapElem = new this.mapElemModel({
+            ...createMapElemDto,
+            campaignId: new Types.ObjectId(campaignId)
+        })
         return newMapElem.save()
     }
 

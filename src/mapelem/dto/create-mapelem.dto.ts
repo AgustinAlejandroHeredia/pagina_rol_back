@@ -1,25 +1,34 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from "class-validator"
+import { IsBoolean, IsMongoId, IsNotEmpty, IsNumber, IsString } from "class-validator"
 
 export class CreateMapElemDto {
 
     @IsString()
     @IsNotEmpty()
-    title:string
+    name:string
 
-    @IsNumber()
+    @IsString()
     @IsNotEmpty()
-    capa:number
-
-    @IsBoolean()
-    @IsNotEmpty()
-    visible:boolean
+    description:string
 
     @IsString()
     @IsNotEmpty()
     type:string
 
-    @IsString()
+    @IsBoolean()
     @IsNotEmpty()
+    visible:boolean
+
+    @IsNumber()
+    @IsNotEmpty()
+    layer:number
+
+    @IsString()
     coords:string
+
+    @IsString()
+    picture:string
+
+    @IsMongoId()
+    campaignId: string;
 
 }
