@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
 // DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -15,41 +15,55 @@ import { throws } from 'assert';
 // SERVICES
 import { UserService } from 'src/user/user.service';
 
+// BACKBLAZE
+import { BackblazeService } from 'src/backblaze/backblaze.service';
+
 @Injectable()
 export class CampaignService {
 
     constructor(
         @InjectModel(Campaign.name) private campaignModel: Model<Campaign>,
+        private readonly backblazeService: BackblazeService,
         private readonly userService: UserService,
     ){}
 
     // CREAR CAMPAING
     async createCampaign(userId: string, name: string, description: string, system: string) {
 
-        const dungeonMasterResult = await this.userService.getUserByAuth0Id(userId)
-        if(!dungeonMasterResult){
-            throw new BadRequestException("Error en autenticacion")
+        try {
+
+            const dungeonMasterResult = await this.userService.getUserByAuth0Id(userId)
+            if(!dungeonMasterResult){
+                throw new BadRequestException("Error en autenticacion")
+            }
+
+            const dungeonMaster = {
+                auth0_id: dungeonMasterResult.auth0_id,
+                mongo_id: dungeonMasterResult._id.toString(),
+                alias: "Dungeon Master"
+            }
+
+            const campaignData : CreateCampaignDto = {
+                name: name,
+                description: description,
+                system: system,
+                dungeonMaster,
+                users: [dungeonMaster]
+            }
+
+            console.log('BODY DE CREATE CAMPAIGN -> ', campaignData)
+
+            // como default el schema inica la lista de usuarios vacia
+            const newCampaign = new this.campaignModel(campaignData)
+
+            // POR ULTIMO MANDA A CREAR LA CARPETA DE LA CAMPAÑA EN BACKBLAZE
+            this.backblazeService.initializeCampaignStorage(newCampaign._id.toString())
+
+            return newCampaign.save()
+
+        } catch (error) {
+            throw new InternalServerErrorException('Error creating the campaign')
         }
-
-        const dungeonMaster = {
-            auth0_id: dungeonMasterResult.auth0_id,
-            mongo_id: dungeonMasterResult._id.toString(),
-            alias: "Dungeon Master"
-        }
-
-        const campaignData : CreateCampaignDto = {
-            name: name,
-            description: description,
-            system: system,
-            dungeonMaster,
-            users: [dungeonMaster]
-        }
-
-        console.log('BODY DE CREATE CAMPAIGN -> ', campaignData)
-
-        // como default el schema inica la lista de usuarios vacia
-        const newCampaign = new this.campaignModel(campaignData)
-        return newCampaign.save()
     }
 
     async getCampaignById(campaignId: string){

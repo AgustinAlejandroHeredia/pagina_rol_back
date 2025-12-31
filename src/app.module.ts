@@ -13,6 +13,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MapelemModule } from './mapelem/mapelem.module';
 import { UserModule } from './user/user.module';
 import { InviteModule } from './invite/invite.module';
+import { BackblazeModule } from './backblaze/backblaze.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { InviteModule } from './invite/invite.module';
     MapelemModule,
     UserModule,
     InviteModule,
+    BackblazeModule,
 
   ],
 
