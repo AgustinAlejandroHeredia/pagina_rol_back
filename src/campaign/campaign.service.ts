@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 
 // DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
 
 // MONGOOSE
 import { Model, Types } from 'mongoose'
@@ -64,6 +65,18 @@ export class CampaignService {
         } catch (error) {
             throw new InternalServerErrorException('Error creating the campaign')
         }
+    }
+
+    async updateCampaign(campaignId: string, updateData: UpdateCampaignDto){
+        return this.campaignModel.findByIdAndUpdate(
+            campaignId,
+            {$set: updateData},
+            {new: true},
+        ).lean()
+    }
+
+    async deleteCampaign(campaignId: string){
+        return this.campaignModel.findByIdAndDelete(campaignId).lean()
     }
 
     async getCampaignById(campaignId: string){

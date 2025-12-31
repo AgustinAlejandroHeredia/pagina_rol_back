@@ -1,9 +1,13 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { CampaignService } from './campaign.service';
+
+// DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
 
 // MONGOOSE
 import { MongooseModule } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 // SWAGGER
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
@@ -25,6 +29,7 @@ export class CampaignController {
     ) {}
 
     // CREACION
+    @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post()
@@ -39,6 +44,43 @@ export class CampaignController {
         }
 
         return this.campaignService.createCampaign(userId, body.name, body.description, body.system)
+    }
+
+    // UPDATE
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Patch(':campaignId')
+    async updateCampaign(
+        @Param('campaignId') campaignId: string,
+        @Body() updateData: UpdateCampaignDto
+    ){
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
+
+        const updated = await this.campaignService.updateCampaign(campaignId, updateData)
+
+        if(!updated){
+            throw new BadRequestException('Error during campaign update')
+        }
+
+        return updated
+    }
+
+    // DELETE
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Delete(':campaignId')
+    async deleteCampaign(
+        @Param('campaignId') campaignId: string,
+    ) {
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
+
+        return this.campaignService.deleteCampaign(campaignId)
     }
 
     // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token) PARA HOME (request compuesta)
