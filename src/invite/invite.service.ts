@@ -37,47 +37,42 @@ export class InviteService {
         if(!campaign){
             throw new BadRequestException("Campaign not found")
         }
+        console.log("campaign obtained")
 
         // verifica que exista el usuario
-        const userFinal = await this.userService.userEmailExists(email) || null
-        if(!userFinal){
+        const finalUser = await this.userService.userEmailExists(email) || null
+        if(!finalUser){
             throw new BadRequestException("Error al enviar el email")
         }
+        console.log("finalUser obtained")
 
-        const for_mongo_id = userFinal._id.toString()
+        // verifica que el emisario existe
+        const senderUser = await this.userService.getUserByAuth0Id(userId)
+        if(!senderUser){
+            throw new BadRequestException();
+        }
+        console.log("senderUser obtained")
 
-        try{
+        const for_mongo_id = finalUser._id.toString()
 
-            const senderUser = await this.userService.getUserByAuth0Id(userId)
-            if(!senderUser){
-                throw new BadRequestException();
-            }
+        const from_mongo_id = senderUser._id.toString()
 
-            const from_mongo_id = senderUser._id.toString()
+        const expires_at = new Date(Date.now() + 12 * 60 * 60 * 1000)
 
-            const expires_at = new Date(Date.now() + 12 * 60 * 60 * 1000)
+        const token = this.generateCode()
 
-            const token = this.generateCode()
-
-            const inviteData : InviteDto = {
-                campaign_id: campaign_id,
-                from_mongo_id: from_mongo_id,
-                for_mongo_id: for_mongo_id,
-                expires_at: expires_at,
-                token: token
-            }
-
-            const newIvite = new this.inviteModel(inviteData)
-            return newIvite.save()
-
-        }catch(error){
-
-            if(error instanceof BadRequestException){
-                throw new BadRequestException('Algo salio mal')
-            }
-            throw new InternalServerErrorException('Ocurrio un error en el servidor')
+        const inviteData : InviteDto = {
+            campaign_id: campaign_id,
+            from_mongo_id: from_mongo_id,
+            for_mongo_id: for_mongo_id,
+            expires_at: expires_at,
+            token: token
         }
 
+        const newIvite = new this.inviteModel(inviteData)
+        const savedData = await newIvite.save()
+
+        console.log(savedData)
     }
 
 }

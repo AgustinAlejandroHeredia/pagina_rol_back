@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { BackblazeService } from './backblaze.service';
 
 // SWAGGER
@@ -149,6 +149,13 @@ export class BackblazeController {
         }
 
         return this.backblazeService.deleteCampaignFiles(campaignId)
+    }
+
+    @Get('compendium/:campaignId')
+    async getCompendiumFiles(@Param('campaignId') campaignId: string){
+        const result = this.backblazeService.listCompendiumFiles(campaignId)
+        console.log("RESULTADO getCompendiumFiles : ", JSON.stringify(result, null, 2))
+        return result
     }
 
 }

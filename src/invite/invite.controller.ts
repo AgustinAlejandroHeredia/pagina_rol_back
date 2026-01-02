@@ -20,8 +20,6 @@ export class InviteController {
         private readonly inviteService: InviteService,
     ){}
 
-    // NO SE TESTEA TODAVIA
-
     // CREACION
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
@@ -31,13 +29,19 @@ export class InviteController {
         @Body() body: { campaign_id: string, email: string }
     ) {
 
+        console.log("CREATE INVITE BODY : ", body)
+
         // verifica que no falten datos
         if(!body.campaign_id.trim() || !body.email.trim()){
             throw new BadRequestException("Faltan uno o mas campos requeridos (campaign_id: string, email: string)")
         }
 
-        return this.inviteService.createInvite(userId, body.campaign_id, body.email)
+        await this.inviteService.createInvite(userId, body.campaign_id, body.email)
 
+        return {
+            success: true,
+            message: 'Invitation sent successfully',
+        }
     }
 
 }

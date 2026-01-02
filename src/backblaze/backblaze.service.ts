@@ -218,7 +218,7 @@ export class BackblazeService {
             const fullPath = `${campaignId}/${safeFolderName}/${safeFileName}`
 
             const response = await this.b2.listFileNames({
-                bbucketId: this.configService.get<string>('B2_BUCKET_ID'),
+                bucketId: this.configService.get<string>('B2_BUCKET_ID'),
                 prefix: fullPath,
                 maxFileCount: 1,
             })
@@ -246,6 +246,41 @@ export class BackblazeService {
     }
 
     async deleteCampaignFiles(campaignId: string){
+
+    }
+
+    // envia una lista con nombre del archivo y su id
+    async listCompendiumFiles(campaignId: string): Promise<{name: string, fileId: string}[]> {
+        
+        await this.b2.authorize()
+
+        const prefix = `${campaignId}/compendium/`
+        let nextFileName: string | undefined
+        const files: {name: string, fileId: string}[] = []
+
+        const ignoredEndings  = ['.keep', '.bzEmpty'];
+
+        do {
+            const response = await this.b2.listFileNames({
+                bucketId: this.configService.get<string>('B2_BUCKET_ID'),
+                prefix,
+                startFileName: nextFileName,
+            })
+
+            for (const file of response.data.files) {
+                const relativeName = file.fileName.replace(prefix, '')
+
+                // se evita este (.keep o .bzEmpty) archivo base que es para crear la estructura al principio
+                if (ignoredEndings.some(ending => relativeName.endsWith(ending))) continue;
+
+                files.push({
+                    name: relativeName,
+                    fileId: file.fileId,
+                })
+            }
+        } while (nextFileName)
+
+        return files
 
     }
 
