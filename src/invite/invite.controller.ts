@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, InternalServerErrorException, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Get, InternalServerErrorException, Param, Post, UseGuards } from '@nestjs/common';
 import { InviteService } from './invite.service';
 import { UserService } from 'src/user/user.service';
 import { CampaignService } from 'src/campaign/campaign.service';
@@ -29,19 +29,57 @@ export class InviteController {
         @Body() body: { campaign_id: string, email: string }
     ) {
 
-        console.log("CREATE INVITE BODY : ", body)
+        try {
+            if (!body.campaign_id?.trim() || !body.email?.trim()) {
+                throw new BadRequestException(
+                    'Some field is missing (req: campaign_id, email)',
+                );
+            }
 
-        // verifica que no falten datos
-        if(!body.campaign_id.trim() || !body.email.trim()){
-            throw new BadRequestException("Faltan uno o mas campos requeridos (campaign_id: string, email: string)")
+            await this.inviteService.createInvite(
+                userId,
+                body.campaign_id,
+                body.email,
+            );
+
+            return {
+                success: true,
+                message: 'Invitation sent successfully',
+            };
+
+        } catch (error) {
+
+            if (error instanceof ConflictException) {
+                return {
+                    success: false,
+                    message: 'Invitation already exists',
+                };
+            }
+
+            if (error instanceof BadRequestException) {
+                return {
+                    success: false,
+                    message: error.message,
+                };
+            }
+
+            return {
+                success: false,
+                message: 'Something went wrong',
+            };
         }
+    }
 
-        await this.inviteService.createInvite(userId, body.campaign_id, body.email)
-
-        return {
-            success: true,
-            message: 'Invitation sent successfully',
-        }
+    // JOIN CAMPAIGN
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('/joinCampaign/:token/:alias')
+    async joinCampaign(
+        @Param('token') token: string,
+        @Param('alias') alias: string,
+    ) {
+        console.log("TOKEN INVITATION RECIVED : ", token)
+        await this.inviteService.validateInvite(token, alias)
     }
 
 }

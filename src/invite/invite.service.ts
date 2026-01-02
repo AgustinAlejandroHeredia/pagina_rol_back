@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
 // MONGOOSE
 import { InjectModel } from '@nestjs/mongoose';
@@ -30,7 +30,17 @@ export class InviteService {
         return Array.from(bytes, b => chars[b % chars.length]).join('');
     } 
 
-    async createInvite(userId: string, campaign_id: string, email: string) {
+    private isExpired(expires_at: string): boolean{
+        const now = new Date()
+        const expiresAt = new Date(expires_at)
+        if(expiresAt < now){
+            return true
+        }
+        return false
+    }
+
+    // TESTED
+    async createInvite(auth0_sender_userId: string, campaign_id: string, email: string) {
 
         // existe la campaña que se busca
         const campaign = await this.campaignService.getCampaignById(campaign_id)
@@ -45,9 +55,23 @@ export class InviteService {
             throw new BadRequestException("Error al enviar el email")
         }
         console.log("finalUser obtained")
+        const finalUserId = finalUser._id.toString()
+
+        // verifica que no exista una invitacion a este usuario para esta campaña
+        const now = new Date().toString();
+        const existingInvite = await this.inviteModel.findOne({
+            for_mongo_id: finalUserId,
+            campaign_id,
+        }).lean();
+
+        if(existingInvite){
+            console.log("YA EXISTE UNA INVITACION")
+            throw new ConflictException('Invitation alredy exists')
+        }
+        console.log("no existe invitacion para userId : ", finalUserId, " y campaignId : ", campaign_id)
 
         // verifica que el emisario existe
-        const senderUser = await this.userService.getUserByAuth0Id(userId)
+        const senderUser = await this.userService.getUserByAuth0Id(auth0_sender_userId)
         if(!senderUser){
             throw new BadRequestException();
         }
@@ -73,6 +97,54 @@ export class InviteService {
         const savedData = await newIvite.save()
 
         console.log(savedData)
+    }
+
+    async getInviteByToken(token: string) {
+        return this.inviteModel
+            .findOne(
+                { "token": token }
+            )
+            .lean()
+            .exec()
+    }
+
+    async deleteInvite(inviteId: string) {
+        return this.inviteModel.findByIdAndDelete(inviteId).lean()
+    }
+
+    async validateInvite(token: string, alias: string) {
+
+        const invite = await this.getInviteByToken(token);
+
+        if (!invite) {
+            throw new BadRequestException('Invitación inválida');
+        }
+
+        if (this.isExpired(invite.expires_at)) {
+            await this.deleteInvite(invite._id.toString());
+            throw new BadRequestException('Invitación expirada');
+        }
+
+        if (!invite.campaign_id || !invite.for_mongo_id) {
+            throw new InternalServerErrorException('Invitación corrupta');
+        }
+
+        try {
+
+            await this.campaignService.addUser(
+                invite.campaign_id,
+                invite.for_mongo_id,
+                alias,
+            );
+
+            await this.deleteInvite(invite._id.toString());
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Error al procesar la invitación',
+            );
+        }
+
+        return { success: true };
     }
 
 }

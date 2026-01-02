@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 // DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -18,6 +18,7 @@ import { UserService } from 'src/user/user.service';
 
 // BACKBLAZE
 import { BackblazeService } from 'src/backblaze/backblaze.service';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class CampaignService {
@@ -73,6 +74,41 @@ export class CampaignService {
             {$set: updateData},
             {new: true},
         ).lean()
+    }
+
+    async addUser(
+        campaignId: string, 
+        userId: string, 
+        alias: string
+    ) {
+        const user = await this.userService.getUserByMongoId(userId)
+
+        if(!user) {
+            throw new NotFoundException('User not found')
+        }
+
+        const campaignUser = {
+            mongo_id: user._id,
+            auth0_id: user.auth0_id,
+            alias,
+        }
+
+        const updatedCampaign = await this.campaignModel.findByIdAndUpdate(
+            {
+                _id: campaignId,
+                'users.mongo_id': { $ne: user._id },
+            },
+            {
+                $push: { users : campaignUser }
+            },
+            { new: true }
+        ).lean()
+
+        if(!updatedCampaign){
+            throw new NotFoundException('Campaign not found or user alredy in the campaign')
+        }
+
+        return { success : true }
     }
 
     async deleteCampaign(campaignId: string){
