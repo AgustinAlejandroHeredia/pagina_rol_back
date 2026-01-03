@@ -185,25 +185,38 @@ export class BackblazeService {
     }
 
     // Se sube un archivo indicando campaña y carpeta de compendium
-    async uploadFile(file: Express.Multer.File, campaignId: string, folder: string){
-        try {
+    async uploadFiles(files: Express.Multer.File[], campaignId: string, folder: string) {
+        if (!files || files.length === 0) return
 
+        const filesArray = Array.isArray(files) ? files : [files]
+
+        try {
             const uploadUrlData = await this.getAuthorizedUploadUrl()
 
-            const safeFileName = this.sanitizeFileName(file.originalname)
-            const fileName = `${campaignId}/${folder}/${safeFileName}`
+            await Promise.all(
+                filesArray.map(async (file) => {
+                    const safeFileName = this.sanitizeFileName(file.originalname)
 
-            await this.b2.uploadFile({
-                uploadUrl: uploadUrlData.data.uploadUrl,
-                uploadAuthToken: uploadUrlData.data.authorizationToken,
-                fileName,
-                data: file.buffer,
-            })
+                    // Determinar la ruta final
+                    let filePath = `${campaignId}/compendium/`
+                    if (folder && folder !== 'root') {
+                        filePath += `${folder}/`
+                    }
+                    filePath += safeFileName
 
+                    await this.b2.uploadFile({
+                        uploadUrl: uploadUrlData.data.uploadUrl,
+                        uploadAuthToken: uploadUrlData.data.authorizationToken,
+                        fileName: filePath,
+                        data: file.buffer,
+                    })
+                })
+            )
+            console.log(" FILE UPLOADED ")
         } catch (error) {
-            throw new InternalServerErrorException('Error uploading file')
+            console.error(error)
+            throw new InternalServerErrorException('Error uploading files')
         }
-
     }
 
     async deleteFolder(campaignId: string, folderName: string){

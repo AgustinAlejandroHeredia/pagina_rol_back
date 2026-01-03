@@ -1,9 +1,18 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { BackblazeService } from './backblaze.service';
 
 // SWAGGER
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+
+// TYPE
+import { ALLOWED_MIME_TYPES } from './upload-file-types';
+
+// PERMISSIONS, DECORATORS, GUARDS
+import { PermissionGuard } from 'src/auth/permissions.guard';
+import { Permissions } from 'src/auth/permissions.decorator';
+import { User } from 'src/auth/user.decorator';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Backblaze')
 @Controller('backblaze')
@@ -22,6 +31,8 @@ export class BackblazeController {
     ){}
 
     // Se usa para crear la estructura de archivos en Backblaze para trabajar luego
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Post('initialize/:campaignId')
     async initializeCampaignStorage(
         @Param('campaignId') campaignId: string
@@ -34,6 +45,8 @@ export class BackblazeController {
     }
 
     // Crea una carpeta con el nombre dado en la campaña que se indica
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Post('createFolder/:campaignId/:folderName')
     async createFolder(
         @Param('campaignId') campaignId: string,
@@ -51,21 +64,17 @@ export class BackblazeController {
     }
 
     // dado un archivo (SOLO png, jpeg y pdf) lo sube a la carpeta de la campaña indicada
-    @Post('uploadFile')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Post('uploadFile/:campaignId')
     @UseInterceptors(
-        FileInterceptor('file', {
+        FileInterceptor('files', {
             fileFilter: (req, file, cb) => {
 
-                const allowedMimeTypes = [
-                    'image/png',
-                    'image/jpeg',
-                    'application/pdf',
-                ];
-
-                if (!allowedMimeTypes.includes(file.mimetype)) {
+                if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
                     return cb(
                         new BadRequestException(
-                            'Invalid file type. Only PNG, JPG and PDF are allowed'
+                            'Invalid file type.'
                         ),
                         false
                     );
@@ -81,11 +90,11 @@ export class BackblazeController {
         }),
     )
     async uploadFile(
-        @UploadedFile() file: Express.Multer.File, 
-        @Body('campaignId') campaignId: string, 
+        @UploadedFile() files: Express.Multer.File[], 
+        @Param('campaignId') campaignId: string,
         @Body('folder') folder: string,
     ){
-        if (!file) {
+        if (!files) {
             throw new BadRequestException('Missing file');
         }
 
@@ -97,10 +106,12 @@ export class BackblazeController {
             throw new BadRequestException('Missing folder name');
         }
 
-        return this.backblazeService.uploadFile(file, campaignId, folder)
+        return this.backblazeService.uploadFiles(files, campaignId, folder)
     }
 
     // Borra la carpeta que este dentro de la campaña indicada
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Delete('deleteFolder')
     async deleteFolder(
         @Body('campaignId') campaignId: string, 
@@ -118,6 +129,8 @@ export class BackblazeController {
     }
 
     // Borra el archivo dentro de la carpeta en la campaña indicada
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Delete('deleteFile')
     async deleteFile(
         @Body('campaignId') campaignId: string, 
@@ -140,6 +153,8 @@ export class BackblazeController {
     }
 
     // Borra la campaña indicada (solo admin o user que la haya creado)
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Delete('deleteCampaignFiles')
     async deleteCampaignFiles(
         @Body('campaignId') campaignId: string, 
@@ -151,10 +166,14 @@ export class BackblazeController {
         return this.backblazeService.deleteCampaignFiles(campaignId)
     }
 
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Get('compendium/:campaignId')
-    async getCompendiumFiles(@Param('campaignId') campaignId: string){
-        const result = this.backblazeService.listCompendiumFiles(campaignId)
-        console.log("RESULTADO getCompendiumFiles : ", JSON.stringify(result, null, 2))
+    async getCompendiumFiles(
+        @Param('campaignId') campaignId: string
+    ){
+        const result = await this.backblazeService.listCompendiumFiles(campaignId)
+        console.log("RESULTADO getCompendiumFiles : ", result)
         return result
     }
 
