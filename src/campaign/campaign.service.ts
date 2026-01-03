@@ -34,6 +34,8 @@ export class CampaignService {
 
         try {
 
+
+            console.log("Creating campaign...")
             const dungeonMasterResult = await this.userService.getUserByAuth0Id(userId)
             if(!dungeonMasterResult){
                 throw new BadRequestException("Error en autenticacion")
@@ -53,13 +55,15 @@ export class CampaignService {
                 users: [dungeonMaster]
             }
 
+            console.log("Campaña creada")
             console.log('BODY DE CREATE CAMPAIGN -> ', campaignData)
 
             // como default el schema inica la lista de usuarios vacia
             const newCampaign = new this.campaignModel(campaignData)
 
             // POR ULTIMO MANDA A CREAR LA CARPETA DE LA CAMPAÑA EN BACKBLAZE
-            this.backblazeService.initializeCampaignStorage(newCampaign._id.toString())
+            console.log("Creando estructura de archivos")
+            await this.backblazeService.initializeCampaignStorage(newCampaign._id.toString())
 
             return newCampaign.save()
 
@@ -111,7 +115,11 @@ export class CampaignService {
         return { success : true }
     }
 
+    // TESTED
     async deleteCampaign(campaignId: string){
+
+        await this.backblazeService.deleteCampaignSorage(campaignId)
+
         return this.campaignModel.findByIdAndDelete(campaignId).lean()
     }
 

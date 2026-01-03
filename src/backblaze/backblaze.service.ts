@@ -119,8 +119,45 @@ export class BackblazeService {
                 })
             }
 
+            console.log("Estructura de archivos creada")
+
         } catch (error) {
             throw new InternalServerErrorException('Error creating the campaign file structure')
+        }
+    }
+
+    // TESTED
+    async deleteCampaignSorage(campaignId: string){
+        try {
+
+            await this.b2.authorize();
+
+            const bucketId = this.configService.get<string>('B2_BUCKET_ID')
+            const prefix = `${campaignId}/`
+            let nextFileName: string | undefined
+
+            do {
+
+                const response = await this.b2.listFileNames({
+                    bucketId,
+                    prefix,
+                    startFileName: nextFileName
+                })
+
+                for (const file of response.data.files) {
+                    await this.b2.deleteFileVersion({
+                        fileId: file.fileId,
+                        fileName: file.fileName,
+                    })
+                }
+
+                nextFileName = response.data.nextFileName
+
+            } while (nextFileName)
+
+        } catch (error) {
+            console.error("Error deleting campaign folder : ", error)
+            throw new InternalServerErrorException("Error deleting campaign folder")
         }
     }
 
