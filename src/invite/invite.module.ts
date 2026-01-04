@@ -13,6 +13,7 @@ import { Invite, InviteSchema} from 'src/schemas/Invite.schema';
 // MODULES
 import { CampaignModule } from 'src/campaign/campaign.module';
 import { UserModule } from 'src/user/user.module';
+import { EmailModule } from 'src/email/email.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserModule } from 'src/user/user.module';
     }]),
     UserModule,
     CampaignModule,
+    EmailModule,
   ],
   controllers: [InviteController],
   providers: [InviteService],

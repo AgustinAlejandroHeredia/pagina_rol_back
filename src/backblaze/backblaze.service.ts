@@ -256,43 +256,26 @@ export class BackblazeService {
 
     }
 
-    async deleteFile(campaignId: string, folderName: string, fileName: string){
-
+    async deleteFile(fileId: string): Promise<void> {
         try {
-
-            const safeFolderName = this.sanitizeFolderName(folderName)
-            const safeFileName = this.sanitizeFileName(fileName)
-
-            await this.b2.authorize()
-
-            const fullPath = `${campaignId}/${safeFolderName}/${safeFileName}`
-
-            const response = await this.b2.listFileNames({
-                bucketId: this.configService.get<string>('B2_BUCKET_ID'),
-                prefix: fullPath,
-                maxFileCount: 1,
-            })
-
-            if(!response.data.files.length){
-                throw new BadRequestException('File not found')
+            if (!fileId) {
+                throw new BadRequestException('File id is required');
             }
 
-            const file = response.data.files[0]
+            await this.b2.authorize();
+
+            // Primero obtenemos info del archivo para saber el fileName
+            const fileInfo = await this.b2.getFileInfo({ fileId });
 
             await this.b2.deleteFileVersion({
-                fileId: file.fileId,
-                fileName: file.fileName,
-            })
+                fileId,
+                fileName: fileInfo.data.fileName,
+            });
 
         } catch (error) {
-            if (error instanceof BadRequestException) { // querria decir que no se encontro el archivo
-                throw error;
-            }
-            throw new InternalServerErrorException('Error eliminating file')
+            console.error('Error deleting file:', error);
+            throw new InternalServerErrorException('Error deleting file');
         }
-
-
-
     }
 
     async deleteCampaignFiles(campaignId: string){

@@ -15,6 +15,9 @@ import { UserService } from 'src/user/user.service';
 import { randomBytes } from 'crypto';
 import { InviteDto } from './dto/invite.dto';
 
+// EMAILS
+import { EmailService } from 'src/email/email.service';
+
 @Injectable()
 export class InviteService {
 
@@ -22,6 +25,7 @@ export class InviteService {
         @InjectModel(Invite.name) private inviteModel: Model<Invite>,
         private readonly userService: UserService,
         private readonly campaignService: CampaignService,
+        private readonly emailService: EmailService,
     ){}
 
     private generateCode(length = 6): string {
@@ -94,8 +98,14 @@ export class InviteService {
         }
 
         const newIvite = new this.inviteModel(inviteData)
-        const savedData = await newIvite.save()
 
+        console.log("Enviando email...")
+        await this.emailService.sendEmail(finalUser.email, token, "DEFAULT CAMPAIGN")
+        console.log("Email enviado")
+
+        console.log("Generando invitacion...")
+        const savedData = await newIvite.save()
+        console.log("Invitacion generada : ")
         console.log(savedData)
     }
 

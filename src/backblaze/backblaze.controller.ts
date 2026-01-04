@@ -129,27 +129,17 @@ export class BackblazeController {
     }
 
     // Borra el archivo dentro de la carpeta en la campaña indicada
-    @UseGuards(AuthGuard('jwt'), PermissionGuard)
-    @Permissions('read:campaign')
-    @Delete('deleteFile')
+    //@UseGuards(AuthGuard('jwt'), PermissionGuard)
+    //@Permissions('read:campaign')
+    @Delete('deleteFile/:fileId')
     async deleteFile(
-        @Body('campaignId') campaignId: string, 
-        @Body('folderName') folderName: string,
-        @Body('fileName') fileName: string,
+        @Param('fileId') fileId : string
     ){
-        if (!campaignId) {
-            throw new BadRequestException('Missing campaign id');
+        if (!fileId) {
+            throw new BadRequestException('Missing file id');
         }
 
-        if (!folderName) {
-            throw new BadRequestException('Missing folder name');
-        }
-
-        if (!fileName) {
-            throw new BadRequestException('Missing file name');
-        }
-
-        return this.backblazeService.deleteFile(campaignId, folderName, fileName)
+        return this.backblazeService.deleteFile(fileId)
     }
 
     // Borra la campaña indicada (solo admin o user que la haya creado)

@@ -14,6 +14,7 @@ import { MapelemModule } from './mapelem/mapelem.module';
 import { UserModule } from './user/user.module';
 import { InviteModule } from './invite/invite.module';
 import { BackblazeModule } from './backblaze/backblaze.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BackblazeModule } from './backblaze/backblaze.module';
     UserModule,
     InviteModule,
     BackblazeModule,
+    EmailModule,
 
   ],
 
