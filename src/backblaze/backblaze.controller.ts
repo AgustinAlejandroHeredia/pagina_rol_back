@@ -1,5 +1,6 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { BackblazeService } from './backblaze.service';
+import type { Response } from 'express'
 
 // SWAGGER
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
@@ -47,10 +48,10 @@ export class BackblazeController {
     // Crea una carpeta con el nombre dado en la campaña que se indica
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
-    @Post('createFolder/:campaignId/:folderName')
+    @Post('createFolder')
     async createFolder(
-        @Param('campaignId') campaignId: string,
-        @Param('folderName') folderName: string,
+        @Body('campaignId') campaignId: string,
+        @Body('folderName') folderName: string,
     ) {
         if (!campaignId) {
             throw new BadRequestException('Missing campaign id');
@@ -112,10 +113,10 @@ export class BackblazeController {
     // Borra la carpeta que este dentro de la campaña indicada
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
-    @Delete('deleteFolder')
+    @Delete('deleteFolder/:campaignId/:folderName')
     async deleteFolder(
-        @Body('campaignId') campaignId: string, 
-        @Body('folderName') folderName: string,
+        @Param('campaignId') campaignId: string, 
+        @Param('folderName') folderName: string,
     ){
         if (!campaignId) {
             throw new BadRequestException('Missing campaign id');
@@ -129,8 +130,8 @@ export class BackblazeController {
     }
 
     // Borra el archivo dentro de la carpeta en la campaña indicada
-    //@UseGuards(AuthGuard('jwt'), PermissionGuard)
-    //@Permissions('read:campaign')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
     @Delete('deleteFile/:fileId')
     async deleteFile(
         @Param('fileId') fileId : string
@@ -142,20 +143,6 @@ export class BackblazeController {
         return this.backblazeService.deleteFile(fileId)
     }
 
-    // Borra la campaña indicada (solo admin o user que la haya creado)
-    @UseGuards(AuthGuard('jwt'), PermissionGuard)
-    @Permissions('read:campaign')
-    @Delete('deleteCampaignFiles')
-    async deleteCampaignFiles(
-        @Body('campaignId') campaignId: string, 
-    ){
-        if (!campaignId) {
-            throw new BadRequestException('Missing campaign id');
-        }
-
-        return this.backblazeService.deleteCampaignFiles(campaignId)
-    }
-
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('compendium/:campaignId')
@@ -165,6 +152,20 @@ export class BackblazeController {
         const result = await this.backblazeService.listCompendiumFiles(campaignId)
         console.log("RESULTADO getCompendiumFiles : ", result)
         return result
+    }
+
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('getFileById/:fileId')
+    async getFileById(
+        @Param('fileId') fileId: string,
+        @Res() res: Response,
+    ){
+        const file = await this.backblazeService.getFileById(fileId)
+
+        res.setHeader('Content-Type', file.contentType)
+        res.setHeader('Content-Disposition', `inline; filename="${file.fileName}"`)
+        res.send(file.data)
     }
 
 }

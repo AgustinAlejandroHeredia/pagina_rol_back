@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 
 // Config
 import { ConfigService } from '@nestjs/config';
@@ -60,37 +60,46 @@ export class BackblazeService {
 
     // Sanitize file name
     private sanitizeFileName(fileName: string): string {
-
         if (!fileName) {
-            throw new BadRequestException('File name is required');
+            throw new BadRequestException('File name is required')
         }
 
-        const sanitized = fileName.trim();
+        // Decode por si viene URL-encoded
+        let decoded = decodeURIComponent(fileName).trim()
 
-        // no permitir rutas
-        if (sanitized.includes('/') || sanitized.includes('\\')) {
+        // No permitir rutas
+        if (decoded.includes('/') || decoded.includes('\\')) {
             throw new BadRequestException(
                 'Invalid file name. Path separators are not allowed'
-            );
+            )
         }
 
-        // nombre.ext
-        const validFileNameRegex = /^[a-zA-Z0-9._-]+$/;
+        // COLAPSAR EXTENSIONES DUPLICADAS (.pdf.pdf → .pdf)
+        decoded = decoded.replace(/(\.[a-zA-Z0-9]+)\1+$/, '$1')
 
-        if (!validFileNameRegex.test(sanitized)) {
-            throw new BadRequestException(
-                'Invalid file name. Only letters, numbers, ".", "-", and "_" are allowed'
-            );
+        const lastDotIndex = decoded.lastIndexOf('.')
+        if (lastDotIndex === -1) {
+            throw new BadRequestException('File extension is required')
         }
 
-        // debe tener extensión
-        if (!sanitized.includes('.')) {
-            throw new BadRequestException(
-                'Invalid file name. File extension is required'
-            );
+        const rawName = decoded.slice(0, lastDotIndex)
+        const rawExt = decoded.slice(lastDotIndex + 1)
+
+        // Sanitizar nombre
+        const safeName = rawName
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, '_')
+            .replace(/[^a-zA-Z0-9._-]/g, '')
+
+        // Sanitizar extensión
+        const safeExt = rawExt.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+        if (!safeName || !safeExt) {
+            throw new BadRequestException('Invalid file name')
         }
 
-        return sanitized;
+        return `${safeName}.${safeExt}`
     }
 
 
@@ -170,7 +179,7 @@ export class BackblazeService {
 
             const safeFolderName = this.sanitizeFolderName(folderName)
 
-            const fileName = `${campaignId}/${safeFolderName}/.keep`
+            const fileName = `${campaignId}/compendium/${safeFolderName}/.keep`
 
             await this.b2.uploadFile({
                 uploadUrl: uploadUrlData.data.uploadUrl,
@@ -180,6 +189,7 @@ export class BackblazeService {
             })
 
         } catch (error) {
+            console.error('CREATE FOLDER ERROR : ', error);
             throw new InternalServerErrorException('Error new creating the campaign folder')
         }
     }
@@ -227,7 +237,7 @@ export class BackblazeService {
             // autoriza, no necesita url
             await this.b2.authorize()
 
-            const prefix = `${campaignId}/${safeFolderName}/`
+            const prefix = `${campaignId}/compendium/${safeFolderName}/`
             
             let nextFileName: string | undefined
 
@@ -253,7 +263,6 @@ export class BackblazeService {
         } catch (error) {
             throw new InternalServerErrorException('Error eliminating folder')
         }
-
     }
 
     async deleteFile(fileId: string): Promise<void> {
@@ -278,43 +287,75 @@ export class BackblazeService {
         }
     }
 
-    async deleteCampaignFiles(campaignId: string){
-
-    }
-
     // envia una lista con nombre del archivo y su id
-    async listCompendiumFiles(campaignId: string): Promise<{name: string, fileId: string}[]> {
-        
+    async listCompendiumFiles(
+        campaignId: string
+    ): Promise<{ name: string; fileId: string | null }[]> {
+
         await this.b2.authorize()
 
         const prefix = `${campaignId}/compendium/`
         let nextFileName: string | undefined
-        const files: {name: string, fileId: string}[] = []
 
-        const ignoredEndings  = ['.keep', '.bzEmpty'];
+        const files: { name: string; fileId: string | null }[] = []
 
         do {
             const response = await this.b2.listFileNames({
-                bucketId: this.configService.get<string>('B2_BUCKET_ID'),
-                prefix,
-                startFileName: nextFileName,
+            bucketId: this.configService.get<string>('B2_BUCKET_ID'),
+            prefix,
+            startFileName: nextFileName,
             })
 
             for (const file of response.data.files) {
-                const relativeName = file.fileName.replace(prefix, '')
+            const relativeName = file.fileName.replace(prefix, '')
 
-                // se evita este (.keep o .bzEmpty) archivo base que es para crear la estructura al principio
-                if (ignoredEndings.some(ending => relativeName.endsWith(ending))) continue;
+            // ignoromos infraestructura
+            if (relativeName === '.keep') continue
+            if (relativeName.endsWith('.bzEmpty')) continue
 
-                files.push({
-                    name: relativeName,
-                    fileId: file.fileId,
-                })
+            files.push({
+                name: relativeName,          // Example/.keep | mapa.jpg
+                fileId: file.fileId ?? null,
+            })
             }
+
+            nextFileName = response.data.nextFileName
         } while (nextFileName)
 
         return files
+    }
 
+    async getFileById(fileId: string): Promise<{
+        data: Buffer
+        fileName: string
+        contentType: string
+    }>{
+        try {
+
+            await this.b2.authorize()
+
+            const fileInfo = await this.b2.getFileInfo({ fileId })
+
+            if (!fileInfo?.data) {
+                throw new NotFoundException('File not found')
+            }
+
+            const { fileName, contentType } = fileInfo.data
+
+            const downloadResponse = await this.b2.downloadFileById({
+                fileId,
+                responseType: 'arraybuffer',
+            })
+
+            return {
+                data: Buffer.from(downloadResponse.data),
+                fileName,
+                contentType: contentType || 'application/octet-stream'
+            }
+
+        } catch (error) {
+            throw new InternalServerErrorException('Error downloading file')
+        }
     }
 
 }
