@@ -37,6 +37,13 @@ export class Campaign extends Document {
     })
     mapElems: MapElem[];
 
+    @Prop({
+        type: String,
+        required:false,
+        default: null,
+    })
+    mapId: string | null
+
 }
 
 export const CampaignSchema = SchemaFactory.createForClass(Campaign)

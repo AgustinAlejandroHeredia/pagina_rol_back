@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+
+// Campaign
+import { CampaignService } from 'src/campaign/campaign.service';
+import { UpdateCampaignDto } from 'src/campaign/dto/update-campaign.dto';
 
 // Config
 import { ConfigService } from '@nestjs/config';
@@ -9,7 +13,7 @@ const B2 = require('backblaze-b2')
 
 // Auxiliares para backblaze
 import multer from 'multer';
-import { application, NextFunction, Response } from 'express';
+import { application, NextFunction, response, Response } from 'express';
 import { NestFactory } from '@nestjs/core';
 
 @Injectable()
@@ -19,7 +23,9 @@ export class BackblazeService {
     private readonly logger = new Logger()
 
     constructor(
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        @Inject(forwardRef(() => CampaignService))
+        private readonly campaignService: CampaignService,
         // @InjectModel(archivo a tratar) private archivoModel: Model<Archivo>
     ){
         this.b2 = new B2({
@@ -41,21 +47,27 @@ export class BackblazeService {
 
     // Sanitize folder name
     private sanitizeFolderName(folderName: string): string {
-
-        if(!folderName){
-            throw new BadRequestException('Folder name is required')
+        if (!folderName) {
+            throw new BadRequestException('Folder name is required');
         }
 
-        const sanitized = folderName.trim()
-        const validNameRegex = /^[a-zA-Z0-9-_]+$/
+        const sanitized = folderName.trim();
 
-        if(!validNameRegex.test(sanitized)) {
+        // Evitar rutas
+        if (sanitized.includes('/') || sanitized.includes('\\')) {
+            throw new BadRequestException('Invalid folder name. Path separators are not allowed');
+        }
+
+        // Letras, números, espacios, guiones y _
+        const validNameRegex = /^[a-zA-Z0-9 _-]+$/;
+
+        if (!validNameRegex.test(sanitized)) {
             throw new BadRequestException(
-                'Invalid folder name. Only letters, numbers, "-" and "_" are allowed'
-            )
+                'Invalid folder name. Only letters, numbers, spaces, "-" and "_" are allowed'
+            );
         }
 
-        return sanitized
+        return sanitized;
     }
 
     // Sanitize file name
@@ -355,6 +367,44 @@ export class BackblazeService {
 
         } catch (error) {
             throw new InternalServerErrorException('Error downloading file')
+        }
+    }
+
+    // Sube el archivo que seria el mapa de la campaña y llama a campaign.service para actualizar ese dato
+    async uploadCampaignMap(
+        campaignId: string,
+        file: Express.Multer.File,
+    ): Promise<string> {
+        try {
+
+            // sube el archivo
+
+            const uploadUrlData = await this.getAuthorizedUploadUrl()
+
+            const fileName = `${campaignId}/campaign_map/${file.originalname}`
+
+            const response = await this.b2.uploadFile({
+                uploadUrl: uploadUrlData.data.uploadUrl,
+                uploadAuthToken: uploadUrlData.data.authorizationToken,
+                fileName,
+                data: file.buffer,
+            })
+
+            console.log("MAPA CREADO")
+
+            const fileId = response.data.fileId
+
+            // actualiza la campaña
+
+            await this.campaignService.updateCampaign(campaignId, { mapId: fileId })
+            console.log("CAMPAÑA ACTUALIZADA")
+
+            // devuelve la id del archivo de backblaze
+            return fileId
+
+        } catch (error) {
+            console.error(error)
+            throw new InternalServerErrorException('Error uploading campaign map')
         }
     }
 

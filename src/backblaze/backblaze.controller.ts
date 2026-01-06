@@ -168,4 +168,24 @@ export class BackblazeController {
         res.send(file.data)
     }
 
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Post('uploadCampaignMap/:campaignId')
+    @UseInterceptors(FileInterceptor('map'))
+    async uploadCampaignMap(
+        @Param('campaignId') campaignId: string,
+        @UploadedFile() file: Express.Multer.File
+    ){
+
+        console.log("FILE QUE RECIBE : " , file)
+
+        if(!file){
+            throw new BadRequestException('No file found')
+        }
+
+        const fileId = await this.backblazeService.uploadCampaignMap(campaignId, file)
+
+        return {fileId}
+    }
+
 }

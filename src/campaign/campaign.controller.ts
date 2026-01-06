@@ -143,4 +143,17 @@ export class CampaignController {
         return result
     }
 
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get('/isInCampaign/:campaignId')
+    async isInCampaign(
+        @Param('campaignId') campaignId: string,
+        @User('userId') userId: string,
+    ){
+        const result = await this.campaignService.isInCampaign(campaignId, userId)
+        console.log("RESULTADO isInCampaign : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 // DTOs
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -25,6 +25,7 @@ export class CampaignService {
 
     constructor(
         @InjectModel(Campaign.name) private campaignModel: Model<Campaign>,
+        @Inject(forwardRef(() => BackblazeService))
         private readonly backblazeService: BackblazeService,
         private readonly userService: UserService,
     ){}
@@ -243,6 +244,15 @@ export class CampaignService {
                 },
                 { _id: 1 },
             )
+        return !!campaign
+    }
+
+    async isInCampaign(campaignId: string, userId: string): Promise<boolean> {
+        const campaign = await this.campaignModel.findOne({
+            _id: campaignId,
+            'users.auth0_id': userId,
+        }).select('_id').lean()
+
         return !!campaign
     }
 

@@ -1,14 +1,21 @@
-import { IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
 export class UpdateCampaignDto {
 
+    @IsOptional()
     @IsString()
-    name: string
+    name?: string
 
+    @IsOptional()
     @IsString()
-    description: string
+    description?: string
 
+    @IsOptional()
     @IsString()
-    system: string
+    system?: string
+
+    @IsOptional()
+    @IsString()
+    mapId?: string
 
 }
