@@ -44,4 +44,8 @@ export class MapelemService {
         ).lean()
     }
 
+    async deleteMapElem(mapElemId: string){
+        return this.mapElemModel.findByIdAndDelete(mapElemId).lean()
+    }
+
 }

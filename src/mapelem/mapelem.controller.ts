@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Param, Get, BadRequestException, Query, Patch } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param, Get, BadRequestException, Query, Patch, Delete } from '@nestjs/common';
 import { MapelemService } from './mapelem.service';
 
 import { PermissionGuard } from 'src/auth/permissions.guard';
@@ -65,6 +65,22 @@ export class MapelemController {
 
         const result = await this.mapElemService.updateMapElem(mapElemId, updateData)
         console.log("RESULTADO updateMapElem : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
+    // DELETE
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Delete(':mapElemId')
+    async deleteMapElem(
+        @Param('mapElemId') mapElemId: string,
+    ){
+        if (!Types.ObjectId.isValid(mapElemId)) {
+            throw new BadRequestException('Invalid campaignId');
+        }
+
+        const result = await this.mapElemService.deleteMapElem(mapElemId)
+        console.log("RESULTADO deleteMapElem : ", JSON.stringify(result, null, 2))
         return result
     }
 
