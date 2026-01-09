@@ -33,6 +33,12 @@ export class MapElem extends Document {
     })
     campaignId: Types.ObjectId;
 
+    @Prop({required:true})
+    x: number
+
+    @Prop({required:true})
+    y: number
+
 }
 
 export const MapElemSchema = SchemaFactory.createForClass(MapElem)

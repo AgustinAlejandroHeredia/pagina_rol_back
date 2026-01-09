@@ -31,4 +31,12 @@ export class CreateMapElemDto {
     @IsMongoId()
     campaignId: string;
 
+    @IsNumber()
+    @IsNotEmpty()
+    x: number
+
+    @IsNumber()
+    @IsNotEmpty()
+    y: number
+
 }

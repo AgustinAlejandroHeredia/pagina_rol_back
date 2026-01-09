@@ -24,4 +24,15 @@ export class MapelemService {
         return newMapElem.save()
     }
 
+    async getMapsElemsByCampaignIdAndLayer(campaignId: string, layer: number){
+        return this.mapElemModel
+            .find(
+                { 
+                    "campaignId": new Types.ObjectId(campaignId),
+                    "layer": layer
+                }
+            )
+            .lean()
+    }
+
 }
