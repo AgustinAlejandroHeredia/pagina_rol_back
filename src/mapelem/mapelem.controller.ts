@@ -1,12 +1,15 @@
-import { Controller, Post, Body, UseGuards, Param, Get, BadRequestException, Query } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param, Get, BadRequestException, Query, Patch } from '@nestjs/common';
 import { MapelemService } from './mapelem.service';
 
 import { PermissionGuard } from 'src/auth/permissions.guard';
 import { Permissions } from 'src/auth/permissions.decorator';
 
+// DTO
+import { CreateMapElemDto } from './dto/create-mapelem.dto';
+import { UpdateMapElemDto } from './dto/update-mapelem.dto';
+
 // MONGOOSE
 import { MongooseModule } from '@nestjs/mongoose';
-import { CreateMapElemDto } from './dto/create-mapelem.dto';
 import { Types } from 'mongoose';
 
 // SWAGGER
@@ -43,8 +46,25 @@ export class MapelemController {
             throw new BadRequestException('Invalid campaignId');
         }
 
-        const result = this.mapElemService.getMapsElemsByCampaignIdAndLayer(campaignId, Number(layer))
+        const result = await this.mapElemService.getMapsElemsByCampaignIdAndLayer(campaignId, Number(layer))
         console.log("RESULTADO getMapElems : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
+    // UPDATE
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Patch(':mapElemId')
+    async updateMapElem(
+        @Param('mapElemId') mapElemId: string,
+        @Body() updateData: UpdateMapElemDto,
+    ){
+        if (!Types.ObjectId.isValid(mapElemId)) {
+            throw new BadRequestException('Invalid campaignId');
+        }
+
+        const result = await this.mapElemService.updateMapElem(mapElemId, updateData)
+        console.log("RESULTADO updateMapElem : ", JSON.stringify(result, null, 2))
         return result
     }
 

@@ -10,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 // SCHEMAS
 import { MapElem, MapElemSchema } from 'src/schemas/MapElem.schema';
 import { ReturningStatementNotSupportedError } from 'typeorm';
+import { UpdateMapElemDto } from './dto/update-mapelem.dto';
 
 @Injectable()
 export class MapelemService {
@@ -33,6 +34,14 @@ export class MapelemService {
                 }
             )
             .lean()
+    }
+
+    async updateMapElem(mapElemId: string, updateData: UpdateMapElemDto){
+        return this.mapElemModel.findByIdAndUpdate(
+            mapElemId,
+            {$set: updateData},
+            {new: true},
+        ).lean()
     }
 
 }
