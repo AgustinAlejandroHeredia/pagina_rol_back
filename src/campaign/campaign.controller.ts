@@ -156,4 +156,17 @@ export class CampaignController {
         return result
     }
 
+    @ApiBearerAuth('access-token') // Para swagger
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Delete('/kickPlayer/:campaignId/:alias')
+    async kickPlayer(
+        @Param('campaignId') campaignId: string,
+        @Param('alias') alias: string,
+    ){
+        const result = await this.campaignService.kickPlayer(campaignId, alias)
+        console.log("RESULTADO quickPlayer : ", JSON.stringify(result, null, 2))
+        return result
+    }
+
 }

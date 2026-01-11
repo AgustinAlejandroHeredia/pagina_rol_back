@@ -256,4 +256,20 @@ export class CampaignService {
         return !!campaign
     }
 
+    async kickPlayer(campaignId: string, alias: string) {
+        return this.campaignModel
+            .findByIdAndUpdate(
+                campaignId,
+                {
+                    $pull: {
+                        users: { alias: alias },
+                    },
+                },
+                {
+                    new: true,
+                },
+            )
+            .lean();
+    }
+
 }
