@@ -4,6 +4,9 @@ import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErro
 import { CampaignService } from 'src/campaign/campaign.service';
 import { UpdateCampaignDto } from 'src/campaign/dto/update-campaign.dto';
 
+// FileMongo
+import { FileMongoRegService } from 'src/filemongoreg/filemongoreg.service';
+
 // Config
 import { ConfigService } from '@nestjs/config';
 
@@ -26,6 +29,7 @@ export class BackblazeService {
         private readonly configService: ConfigService,
         @Inject(forwardRef(() => CampaignService))
         private readonly campaignService: CampaignService,
+        private readonly fileMongoRegService: FileMongoRegService
         // @InjectModel(archivo a tratar) private archivoModel: Model<Archivo>
     ){
         this.b2 = new B2({
@@ -64,7 +68,7 @@ export class BackblazeService {
         if (!validNameRegex.test(sanitized)) {
             throw new BadRequestException(
                 'Invalid folder name. Only letters, numbers, spaces, "-" and "_" are allowed'
-            );
+            )
         }
 
         return sanitized;
@@ -166,6 +170,11 @@ export class BackblazeService {
                 })
 
                 for (const file of response.data.files) {
+
+                    console.log(`Deleting file mongo reg (${file.fileId})...`)
+                    await this.fileMongoRegService.deleteFileMongo(file.fileId)
+
+                    console.log(`Deleting file in backblaze (${file.fileId})...`)
                     await this.b2.deleteFileVersion({
                         fileId: file.fileId,
                         fileName: file.fileName,
@@ -226,15 +235,21 @@ export class BackblazeService {
                     }
                     filePath += safeFileName
 
-                    await this.b2.uploadFile({
+                    console.log(`Uploading backblaze file...`)
+                    const uploadResult = await this.b2.uploadFile({
                         uploadUrl: uploadUrlData.data.uploadUrl,
                         uploadAuthToken: uploadUrlData.data.authorizationToken,
                         fileName: filePath,
                         data: file.buffer,
                     })
+
+                    console.log("ARCHIVO SUBIDO A BACKBLAZE : ", uploadResult)
+
+                    console.log(`Uploading file mongo reg (${uploadResult.data.fileId})...`)
+                    await this.fileMongoRegService.createFileMongo(uploadResult.data.fileId)
                 })
             )
-            console.log(" FILE UPLOADED ")
+            console.log(" FILE UPLOADED & REG GENERATED ")
         } catch (error) {
             console.error(error)
             throw new InternalServerErrorException('Error uploading files')
@@ -262,6 +277,11 @@ export class BackblazeService {
                 })
 
                 for (const file of response.data.files){
+
+                    console.log(`Deleting file mongo reg (${file.fileId})...`)
+                    await this.fileMongoRegService.deleteFileMongo(file.fileId)
+
+                    console.log(`Deleting backblaze file (${file.fileId})...`)
                     await this.b2.deleteFileVersion({
                         fileId: file.fileId,
                         fileName: file.fileName
@@ -279,30 +299,35 @@ export class BackblazeService {
 
     async deleteFile(fileId: string): Promise<void> {
         try {
+
             if (!fileId) {
-                throw new BadRequestException('File id is required');
+                throw new BadRequestException('File id is required')
             }
 
             await this.b2.authorize();
 
             // Primero obtenemos info del archivo para saber el fileName
-            const fileInfo = await this.b2.getFileInfo({ fileId });
+            const fileInfo = await this.b2.getFileInfo({ fileId })
 
+            console.log(`Deleting backblaze file (${fileId})...`)
             await this.b2.deleteFileVersion({
                 fileId,
                 fileName: fileInfo.data.fileName,
-            });
+            })
+
+            console.log(`Deleting file mongo reg (${fileId})...`)
+            await this.fileMongoRegService.deleteFileMongo(fileId)
 
         } catch (error) {
-            console.error('Error deleting file:', error);
-            throw new InternalServerErrorException('Error deleting file');
+            console.error('Error deleting file:', error)
+            throw new InternalServerErrorException('Error deleting file')
         }
     }
 
     // envia una lista con nombre del archivo y su id
     async listCompendiumFiles(
         campaignId: string
-    ): Promise<{ name: string; fileId: string | null }[]> {
+    ): Promise<{ name: string; fileId: string; visibility: boolean | null }[]> {
 
         await this.b2.authorize()
 
@@ -334,7 +359,19 @@ export class BackblazeService {
             nextFileName = response.data.nextFileName
         } while (nextFileName)
 
+        // ADDS visibility fields from mongo
+        const fieldIds = files
+            .map(f => f.fileId)
+            .filter((id): id is string => id !== null)
+
+        const visibilityMap = await this.fileMongoRegService.getVisibilities(fieldIds)
+
         return files
+            .filter((file): file is {name: string; fileId: string} => file.fileId !== null)
+            .map(file => ({
+                ...file,
+                visibility: visibilityMap.get(file.fileId) ?? false,
+            }))
     }
 
     async getFileById(fileId: string): Promise<{

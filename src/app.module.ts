@@ -15,6 +15,7 @@ import { UserModule } from './user/user.module';
 import { InviteModule } from './invite/invite.module';
 import { BackblazeModule } from './backblaze/backblaze.module';
 import { EmailModule } from './email/email.module';
+import { FileMongoRegModule } from './filemongoreg/filemongoreg.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { EmailModule } from './email/email.module';
     InviteModule,
     BackblazeModule,
     EmailModule,
+    FileMongoRegModule,
 
   ],
 

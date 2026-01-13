@@ -35,7 +35,6 @@ export class CampaignService {
 
         try {
 
-
             console.log("Creating campaign...")
             const dungeonMasterResult = await this.userService.getUserByAuth0Id(userId)
             if(!dungeonMasterResult){
@@ -53,7 +52,7 @@ export class CampaignService {
                 description: description,
                 system: system,
                 dungeonMaster,
-                users: [dungeonMaster]
+                users: [dungeonMaster],
             }
 
             console.log("Campaña creada")
