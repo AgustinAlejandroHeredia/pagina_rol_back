@@ -10,6 +10,10 @@ export class CreateMapElemDto {
     @IsNotEmpty()
     description:string
 
+    @IsNotEmpty()
+    @IsString()
+    pictureId?: string
+
     @IsString()
     @IsNotEmpty()
     type:string

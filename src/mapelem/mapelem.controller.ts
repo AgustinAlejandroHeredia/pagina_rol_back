@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Param, Get, BadRequestException, Query, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param, Get, BadRequestException, Query, Patch, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { MapelemService } from './mapelem.service';
 
 import { PermissionGuard } from 'src/auth/permissions.guard';
@@ -15,6 +15,7 @@ import { Types } from 'mongoose';
 // SWAGGER
 import { ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('mapelem')
 export class MapelemController {
@@ -25,13 +26,21 @@ export class MapelemController {
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post(':campaignId')
+    @UseInterceptors(FileInterceptor('file'))
     @ApiBody({ type: CreateMapElemDto })
     async createMapElem(
         @Param('campaignId') campaignId: string,
         @Body() createData: CreateMapElemDto,
+        @UploadedFile() file: Express.Multer.File,
     ){
+        if (!file) {
+            throw new BadRequestException('Image file is required')
+        }
+        if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.mimetype)) {
+            throw new BadRequestException('Only png, jpg or jpeg files are allowed')
+        }
         console.log('BODY DE CREATE MAPELEM -> ', createData)
-        return this.mapElemService.createMapElem(createData, campaignId)
+        return this.mapElemService.createMapElem(createData, campaignId, file)
     }
 
     // GET MAP ELEMS by CAMPAIGNID and LAYER
@@ -74,12 +83,13 @@ export class MapelemController {
     @Delete(':mapElemId')
     async deleteMapElem(
         @Param('mapElemId') mapElemId: string,
+        @Query('pictureId') pictureId: string,
     ){
         if (!Types.ObjectId.isValid(mapElemId)) {
             throw new BadRequestException('Invalid campaignId');
         }
 
-        const result = await this.mapElemService.deleteMapElem(mapElemId)
+        const result = await this.mapElemService.deleteMapElem(mapElemId, pictureId)
         console.log("RESULTADO deleteMapElem : ", JSON.stringify(result, null, 2))
         return result
     }

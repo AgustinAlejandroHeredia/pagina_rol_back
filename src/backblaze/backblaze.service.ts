@@ -445,4 +445,35 @@ export class BackblazeService {
         }
     }
 
+    async uploadMapElemPicture(
+        campaignId: string,
+        file: Express.Multer.File,
+    ):Promise<string>{
+        try {
+
+            const uploadUrlData = await this.getAuthorizedUploadUrl()
+
+            const fileName = `${campaignId}/icons/${file.originalname}`
+
+            const response = await this.b2.uploadFile({
+                uploadUrl: uploadUrlData.data.uploadUrl,
+                uploadAuthToken: uploadUrlData.data.authorizationToken,
+                fileName,
+                data: file.buffer,
+            })
+
+            console.log("IMAGEN CREADA")
+
+            const fileId = response.data.fileId
+
+            return fileId
+
+        } catch (error) {
+            console.error(error)
+            throw new InternalServerErrorException('Error uploading mapElem picture')
+        }
+
+        return ""
+    }
+
 }

@@ -11,6 +11,13 @@ export class MapElem extends Document {
     @Prop({required:true})
     description:string
 
+    @Prop({
+        type: String,
+        required:false,
+        default: null,
+    })
+    pictureId: string | null
+
     @Prop({required:true})
     type:string
 
