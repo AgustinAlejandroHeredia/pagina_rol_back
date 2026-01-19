@@ -169,4 +169,14 @@ export class CampaignController {
         return result
     }
 
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Get("/admin/getCampaignsAsAdmin")
+    async getCampaignsAsAdmin(){
+        const result = await this.campaignService.getCampaignsAsAdmin()
+        console.log("CAMPAIGNS AS ADMIN : ", result)
+        return result
+    }
+
 }

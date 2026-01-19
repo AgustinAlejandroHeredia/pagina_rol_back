@@ -271,4 +271,11 @@ export class CampaignService {
             .lean();
     }
 
+    async getCampaignsAsAdmin(){
+        return this.campaignModel
+            .find({}, { _mapId: 0 })
+            .lean()
+            .exec()
+    }
+
 }

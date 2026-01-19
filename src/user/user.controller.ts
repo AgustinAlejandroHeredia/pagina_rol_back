@@ -50,9 +50,11 @@ export class UserController {
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
-    @Post("/admin/getUsers")
-    async getUsers(){
-        return "Exito"
+    @Get("/admin/getUsersAsAdmin")
+    async getUsersAsAdmin(){
+        const result = await this.userService.getUsersAsAdmin()
+        console.log("USERS AS ADMIN : ", result)
+        return result
     }
 
     // Elimino estos endpoints por ahora

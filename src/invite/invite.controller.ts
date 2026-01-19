@@ -4,7 +4,7 @@ import { UserService } from 'src/user/user.service';
 import { CampaignService } from 'src/campaign/campaign.service';
 
 // SWAGGER
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 // PERMISSIONS, DECORATORS, GUARDS
 import { PermissionGuard } from 'src/auth/permissions.guard';
@@ -80,6 +80,16 @@ export class InviteController {
     ) {
         console.log("TOKEN INVITATION RECIVED : ", token)
         await this.inviteService.validateInvite(token, alias)
+    }
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Get("/admin/getInvitesAsAdmin")
+    async getInvitesAsAdmin(){
+        const result = await this.inviteService.getInvitesAsAdmin()
+        console.log("INVITES AS ADMIN : ", result)
+        return result
     }
 
 }
