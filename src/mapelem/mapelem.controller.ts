@@ -33,10 +33,7 @@ export class MapelemController {
         @Body() createData: CreateMapElemDto,
         @UploadedFile() file: Express.Multer.File,
     ){
-        if (!file) {
-            throw new BadRequestException('Image file is required')
-        }
-        if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.mimetype)) {
+        if (file && !['image/png', 'image/jpeg', 'image/jpg'].includes(file.mimetype)) {
             throw new BadRequestException('Only png, jpg or jpeg files are allowed')
         }
         console.log('BODY DE CREATE MAPELEM -> ', createData)

@@ -25,8 +25,12 @@ export class MapelemService {
 
     async createMapElem(createMapElemDto: CreateMapElemDto, campaignId:string, file: Express.Multer.File){
 
+        let pictureId = ''
+        
         // BACKBLAZE
-        const pictureId = await this.backblazeService.uploadMapElemPicture(campaignId, file)
+        if(file){
+            pictureId = await this.backblazeService.uploadMapElemPicture(campaignId, file)
+        }
 
         // MONGO DB
         const newMapElem = new this.mapElemModel({
