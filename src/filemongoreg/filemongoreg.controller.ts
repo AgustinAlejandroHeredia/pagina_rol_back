@@ -18,9 +18,13 @@ import { UpdateFileMongoDto } from './dto/update-file-mongo.dto';
 @Controller('filemongoreg')
 export class FileMongoRegController {
 
+
+    
     constructor(
         private readonly fileMongoService: FileMongoRegService
     ){}
+
+
 
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -31,24 +35,23 @@ export class FileMongoRegController {
         @Body() body: {fileId: string, visibility: boolean}
     ){
         if(!body.fileId) throw new BadRequestException("Falta la id del archivo")
-        return this.fileMongoService.createFileMongo(body.fileId)
+        await this.fileMongoService.createFileMongo(body.fileId)
     }
+
+
 
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Patch(':fileId')
+    @ApiBody({ type: UpdateFileMongoDto })
     async updateFileView(
         @Param('fileId') fileId: string,
         @Body() updateData: UpdateFileMongoDto,
     ){
-        if(!fileId || !updateData) throw new BadRequestException("Faltan datos")
-        const updated = await this.fileMongoService.updateFileView(fileId, updateData)
-
-        if(!updated) throw new InternalServerErrorException("Error al hacer el update del archivo en mongo")
-    
-        return updated
+        await this.fileMongoService.updateFileView(fileId, updateData)
     }
+
 
 
     @ApiBearerAuth('access-token') // Para swagger
@@ -58,8 +61,7 @@ export class FileMongoRegController {
     async deleteFileMongo(
         @Param('fileId') fileId: string,
     ){
-        if(!fileId) throw new BadRequestException("Falta la id del archivo")
-        return this.fileMongoService.deleteFileMongo(fileId)
+        await this.fileMongoService.deleteFileMongo(fileId)
     }
 
 }

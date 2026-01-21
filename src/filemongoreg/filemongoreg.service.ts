@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 // DTOs
 import { FileMongoDto } from './dto/file-mongo.dto';
@@ -12,9 +12,13 @@ import { FileMongo, FileMongoSchema } from 'src/schemas/FileMongo.schema';
 @Injectable()
 export class FileMongoRegService {
 
+
+
     constructor(
         @InjectModel(FileMongo.name) private fileMongoModel: Model<FileMongo>,
     ){}
+
+
 
     async createFileMongo(fileId: string){
         try {
@@ -26,33 +30,37 @@ export class FileMongoRegService {
             }
 
             const newFileMongo = new this.fileMongoModel(fileData)
-            return newFileMongo.save()
 
         } catch (error) {
             throw new InternalServerErrorException('Error creating the mongo file reg')
         }
     }
 
+
+
     async updateFileView(fileId: string, updateData: UpdateFileMongoDto){
-        
-        if(updateData.visibility){
-            updateData.visibility = false
-        }else{
-            updateData.visibility = true
-        }
-        
-        return this.fileMongoModel.findOneAndUpdate(
+        const result = await this.fileMongoModel.updateOne(
             {file_id: fileId},
-            {$set: updateData},
-            {new: true}
-        ).lean()
+            {
+                $set: {
+                    visibility: !updateData.visibility,
+                },
+            },
+        )
+        if(result.matchedCount === 0){
+            throw new NotFoundException('File not found')
+        }
     }
 
+
+
     async deleteFileMongo(fileId: string){
-        return this.fileMongoModel.findOneAndDelete(
+        await this.fileMongoModel.findOneAndDelete(
             {file_id: fileId}
-        ).lean()
+        )
     }
+
+
 
     private async createMissingRegs(fileIds: string[]): Promise<void> {
         const docs = fileIds.map(id => ({
@@ -62,6 +70,8 @@ export class FileMongoRegService {
 
         await this.fileMongoModel.insertMany(docs, { ordered: false })
     }
+
+
 
     async getVisibilities(fileIds: string[]): Promise<Map<string, boolean>> {
 
