@@ -16,9 +16,13 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('invite')
 export class InviteController {
 
+
+
     constructor(
         private readonly inviteService: InviteService,
     ){}
+
+
 
     // CREACION
     @ApiBearerAuth('access-token')
@@ -29,47 +33,19 @@ export class InviteController {
         @User('userId') userId: string,
         @Body() body: { campaign_id: string, email: string }
     ) {
-
-        try {
-            if (!body.campaign_id?.trim() || !body.email?.trim()) {
-                throw new BadRequestException(
-                    'Some field is missing (req: campaign_id, email)',
-                );
-            }
-
-            await this.inviteService.createInvite(
-                userId,
-                body.campaign_id,
-                body.email,
-            );
-
-            return {
-                success: true,
-                message: 'Invitation sent successfully',
-            };
-
-        } catch (error) {
-
-            if (error instanceof ConflictException) {
-                return {
-                    success: false,
-                    message: 'Invitation already exists',
-                };
-            }
-
-            if (error instanceof BadRequestException) {
-                return {
-                    success: false,
-                    message: error.message,
-                };
-            }
-
-            return {
-                success: false,
-                message: 'Something went wrong',
-            };
+        if (!body.campaign_id?.trim() || !body.email?.trim()) {
+            throw new BadRequestException(
+                'Some field is missing (req: campaign_id, email)',
+            )
         }
+        return await this.inviteService.createInvite(
+            userId,
+            body.campaign_id,
+            body.email,
+        )
     }
+
+
 
     // JOIN CAMPAIGN
     @ApiBearerAuth('access-token')
@@ -84,6 +60,8 @@ export class InviteController {
         await this.inviteService.validateInvite(token, alias)
     }
 
+
+
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
@@ -94,6 +72,8 @@ export class InviteController {
         return result
     }
 
+
+
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
@@ -101,9 +81,7 @@ export class InviteController {
     async deleteInviteAsAdmin(
         @Param('inviteId') inviteId: string
     ){
-        const result = await this.inviteService.deleteInvite(inviteId)
-        console.log("DELETE INVITE AS ADMIN : ", result)
-        return result
+        await this.inviteService.deleteInvite(inviteId)
     }
 
 }
