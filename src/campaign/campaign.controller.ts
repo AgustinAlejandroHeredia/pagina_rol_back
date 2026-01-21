@@ -6,7 +6,6 @@ import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 
 // MONGOOSE
-import { MongooseModule } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 
 // SWAGGER
@@ -18,33 +17,32 @@ import { Permissions } from 'src/auth/permissions.decorator';
 import { User } from 'src/auth/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 
-// USERS SERVICE
-import { UserService } from 'src/user/user.service';
-
 @ApiTags('Campaigns')
 @Controller('campaigns')
 export class CampaignController {
+
+
+
     constructor(
         private readonly campaignService: CampaignService,
     ) {}
 
+
+
     // CREACION
     @ApiBearerAuth('access-token') // Para swagger
+    @ApiBody({ type: CreateCampaignDto })
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post()
-    @ApiBody({ type: CreateCampaignDto })
     async createCampaign(
         @User('userId') userId: string, 
-        @Body() body: { name: string, description: string, system:string } 
+        @Body() dto: CreateCampaignDto 
     ) {
-
-        if(!body.name || !body.description || !body.system){
-            throw new BadRequestException("Faltan uno o mas campos requeridos (name: string, description: string, system: string)")
-        }
-
-        return this.campaignService.createCampaign(userId, body.name, body.description, body.system)
+        return this.campaignService.createCampaign(userId, dto)
     }
+
+
 
     // UPDATE
     @ApiBearerAuth('access-token') // Para swagger
@@ -53,20 +51,15 @@ export class CampaignController {
     @Patch(':campaignId')
     async updateCampaign(
         @Param('campaignId') campaignId: string,
-        @Body() updateData: UpdateCampaignDto
+        @Body() updateDto: UpdateCampaignDto
     ){
         if(!Types.ObjectId.isValid(campaignId)) {
             throw new BadRequestException('Invalid campaign id')
         }
-
-        const updated = await this.campaignService.updateCampaign(campaignId, updateData)
-
-        if(!updated){
-            throw new BadRequestException('Error during campaign update')
-        }
-
-        return updated
+        await this.campaignService.updateCampaign(campaignId, updateDto)
     }
+
+
 
     // DELETE
     @ApiBearerAuth('access-token') // Para swagger
@@ -79,9 +72,10 @@ export class CampaignController {
         if(!Types.ObjectId.isValid(campaignId)) {
             throw new BadRequestException('Invalid campaign id')
         }
-
-        return this.campaignService.deleteCampaign(campaignId)
+        await this.campaignService.deleteCampaign(campaignId)
     }
+
+
 
     // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token) PARA HOME (request compuesta)
     @ApiBearerAuth('access-token') // Para swagger
@@ -89,11 +83,12 @@ export class CampaignController {
     @Permissions('read:campaign')
     @Get('/get_user_campaings_home')
     async getUserCampaingsHome(@User('userId') userId: string) {
-        console.log("USER ID : ", userId)
         const result = await this.campaignService.getUserCampaingsHome(userId)
         console.log("RESULTADO getUserCampaingsHome : ", JSON.stringify(result, null, 2))
         return result
     }
+
+
 
     // Obtener una campaña dada su id
     @ApiBearerAuth('access-token') // Para swagger
@@ -102,10 +97,15 @@ export class CampaignController {
     @Get(':campaignId')
     async getCampaignById(@Param('campaignId') campaignId: string){
         console.log("CAMPAIGN ID : ", campaignId)
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         const result = await this.campaignService.getCampaignById(campaignId)
         console.log("RESULTADO getCampaignById : ", JSON.stringify(result, null, 2))
         return result
     }
+
+
 
     // PEDIR CAMPAINGS DADA UNA ID (id de auth0 en token)
     @ApiBearerAuth('access-token') // Para swagger
@@ -118,16 +118,23 @@ export class CampaignController {
         return result
     }
 
+
+
     // Pide los usuarios de una campaña dada la id de una campaña
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('/get_campaign_users/:campaignId')
     async getUsersCampaign(@Param('campaignId') campaignId: string){
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         const result = await this.campaignService.getUsersCampaign(campaignId)
         console.log("RESULTADO getUsersCampaign ; ", JSON.stringify(result, null, 2))
         return result
     }
+
+
 
     // Dada la id de una campaña, pregunta si el user (token) es dm de la campaña que esta consultando
     @ApiBearerAuth('access-token') // Para swagger
@@ -138,10 +145,15 @@ export class CampaignController {
         @Param('campaignId') campaignId: string,
         @User('userId') userId: string,
     ) {
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         const result = await this.campaignService.isDungeonMaster(campaignId, userId)
         console.log("RESULTADO isDungeonMaster : ", JSON.stringify(result, null, 2))
         return result
     }
+
+
 
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -151,10 +163,15 @@ export class CampaignController {
         @Param('campaignId') campaignId: string,
         @User('userId') userId: string,
     ){
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         const result = await this.campaignService.isInCampaign(campaignId, userId)
         console.log("RESULTADO isInCampaign : ", JSON.stringify(result, null, 2))
         return result
     }
+
+
 
     @ApiBearerAuth('access-token') // Para swagger
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -164,10 +181,13 @@ export class CampaignController {
         @Param('campaignId') campaignId: string,
         @Param('alias') alias: string,
     ){
-        const result = await this.campaignService.kickPlayer(campaignId, alias)
-        console.log("RESULTADO quickPlayer : ", JSON.stringify(result, null, 2))
-        return result
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
+        await this.campaignService.kickPlayer(campaignId, alias)
     }
+
+
 
     // ADMIN
 
@@ -181,6 +201,8 @@ export class CampaignController {
         return result
     }
 
+
+
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
@@ -188,10 +210,13 @@ export class CampaignController {
     async deleteCampaignAsAdmin(
         @Param('campaignId') campaignId: string,
     ){
-        const result = await this.campaignService.deleteCampaign(campaignId)
-        console.log("DELETE CAMPAIGN AS ADMIN : ", result)
-        return result
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
+        await this.campaignService.deleteCampaign(campaignId)
     }
+
+
 
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -201,9 +226,10 @@ export class CampaignController {
         @Param('campaignId') campaignId: string,
         @Param('alias') alias: string,
     ){
-        const result = await this.campaignService.kickPlayer(campaignId, alias)
-        console.log("QUICK PLAYER AS ADMIN : ", JSON.stringify(result, null, 2))
-        return result
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
+        await this.campaignService.kickPlayer(campaignId, alias)
     }
 
 }

@@ -24,8 +24,8 @@ export class CreateCampaignDto {
     @IsNotEmpty()
     description: string
 
-    @IsNotEmpty()
-    dungeonMaster: CampaignUserDto
+    @IsOptional()
+    dungeonMaster?: CampaignUserDto
 
     @IsString()
     @IsNotEmpty()

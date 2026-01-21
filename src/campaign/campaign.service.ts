@@ -23,6 +23,8 @@ import { NotFoundError } from 'rxjs';
 @Injectable()
 export class CampaignService {
 
+
+
     constructor(
         @InjectModel(Campaign.name) private campaignModel: Model<Campaign>,
         @Inject(forwardRef(() => BackblazeService))
@@ -30,8 +32,9 @@ export class CampaignService {
         private readonly userService: UserService,
     ){}
 
-    // CREAR CAMPAING
-    async createCampaign(userId: string, name: string, description: string, system: string) {
+
+
+    async createCampaign(userId: string, dto: CreateCampaignDto) {
 
         try {
 
@@ -48,9 +51,7 @@ export class CampaignService {
             }
 
             const campaignData : CreateCampaignDto = {
-                name: name,
-                description: description,
-                system: system,
+                ...dto,
                 dungeonMaster,
                 users: [dungeonMaster],
             }
@@ -68,17 +69,26 @@ export class CampaignService {
             return newCampaign.save()
 
         } catch (error) {
+            console.error(error)
             throw new InternalServerErrorException('Error creating the campaign')
         }
     }
 
+
+
     async updateCampaign(campaignId: string, updateData: UpdateCampaignDto){
-        return this.campaignModel.findByIdAndUpdate(
+        const updated = await this.campaignModel.findByIdAndUpdate(
             campaignId,
             {$set: updateData},
             {new: true},
         ).lean()
+
+        if(!updated){
+            throw new NotFoundException('Campaign not found')
+        }
     }
+
+
 
     async addUser(
         campaignId: string, 
@@ -115,13 +125,26 @@ export class CampaignService {
         return { success : true }
     }
 
-    // TESTED
+
+
     async deleteCampaign(campaignId: string){
+        const campaign = await this.campaignModel.findById(campaignId)
 
-        await this.backblazeService.deleteCampaignSorage(campaignId)
+        if(!campaign){
+            throw new NotFoundException('Campaign not found')
+        }
 
-        return this.campaignModel.findByIdAndDelete(campaignId).lean()
+        await this.campaignModel.deleteOne({ _id: campaignId })
+        
+        try {
+            await this.backblazeService.deleteCampaignSorage(campaignId)
+        } catch (error) {
+            console.error(error)
+            throw new InternalServerErrorException('Error deleting campaign data from file storage')
+        }
     }
+
+
 
     async getCampaignById(campaignId: string){
         return this.campaignModel
@@ -129,6 +152,8 @@ export class CampaignService {
             .lean()
             .exec()
     }
+
+
 
     // OBTENER CAMPAÑAS DE UN JUGADOR (busca por auth0_id)
     async getUserCampaings(auth0_id: string) {
@@ -140,6 +165,8 @@ export class CampaignService {
             .lean()
             .exec()
     }
+
+
 
     // OBTENER CAMPAÑAS DE UN JUGADOR (busca por auth0_id) PARA MOSTRAR EN HOME
     async getUserCampaingsHome(auth0_id: string) {
@@ -197,6 +224,8 @@ export class CampaignService {
             ])
     }
 
+
+
     async getUsersCampaign(campaign_id: string) {
         return this.campaignModel
             .aggregate([
@@ -234,6 +263,8 @@ export class CampaignService {
             ])
     }
 
+
+
     async isDungeonMaster(campaign_id: string, auth0_id: string): Promise<boolean> {
         const campaign = await this.campaignModel
             .findOne(
@@ -246,6 +277,8 @@ export class CampaignService {
         return !!campaign
     }
 
+
+
     async isInCampaign(campaignId: string, userId: string): Promise<boolean> {
         const campaign = await this.campaignModel.findOne({
             _id: campaignId,
@@ -255,21 +288,29 @@ export class CampaignService {
         return !!campaign
     }
 
+
+
     async kickPlayer(campaignId: string, alias: string) {
-        return this.campaignModel
-            .findByIdAndUpdate(
-                campaignId,
-                {
-                    $pull: {
-                        users: { alias: alias },
-                    },
-                },
-                {
-                    new: true,
-                },
-            )
-            .lean();
+
+        const campaign = await this.campaignModel.findById(campaignId)
+        if (!campaign) {
+            throw new NotFoundException('Campaign not found')
+        }
+
+        const isMember = campaign.users.some(u => u.alias === alias)
+        if(!isMember){
+            throw new NotFoundException('Player not in campaign')
+        }
+
+        const result = await this.campaignModel.updateOne(
+            { _id: campaignId },
+            { $pull: { users: { alias } } },
+        )
+
+        console.log("KICK PLAYER RESULT : ", JSON.stringify(result, null, 2))
     }
+
+
 
     async getCampaignsAsAdmin() {
         return this.campaignModel.aggregate([
