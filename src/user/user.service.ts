@@ -14,17 +14,18 @@ import { ReturningStatementNotSupportedError } from 'typeorm';
 @Injectable()
 export class UserService {
 
+
+
     constructor(@InjectModel(User.name) private userModel: Model<User>){}
 
-    async createUser(createUserDto: CreateUserDto){
-        const newUser = new this.userModel(createUserDto)
-        return newUser.save()
-    }
+
 
     async getUserByMongoId(mongo_id: string) {
         return this.userModel
             .findById(mongo_id)
     }
+
+
 
     async findOrCreateUser(
         auth0_id: string,
@@ -47,6 +48,8 @@ export class UserService {
         ).exec();
     }
 
+
+
     async getUserByAuth0Id(auth0_id: string) {
         return this.userModel
             .findOne({ auth0_id })
@@ -54,12 +57,16 @@ export class UserService {
             .exec()
     }
 
+
+
     async userEmailExists(email: string) {
         return this.userModel
             .findOne({ email })
             .lean()
             .exec()
     }
+
+
 
     // ADMIN
 
@@ -69,6 +76,8 @@ export class UserService {
             .lean()
             .exec()
     }
+
+
 
     async deleteUserAsAdmin(email: string) {
         console.log("-- NOT IMPLEMENTED YET --")

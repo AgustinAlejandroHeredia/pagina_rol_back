@@ -17,6 +17,9 @@ import { User } from 'src/auth/user.decorator';
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
+
+
+
     constructor(private readonly userService: UserService) {}
 
     /*
@@ -27,6 +30,8 @@ export class UserController {
         return this.userService.createUser(createData)
     }
     */
+
+
 
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -47,8 +52,10 @@ export class UserController {
             body.email,
         )
 
-        return { ok: true}
+        return { ok: true }
     }
+
+
 
     // ADMIN
 
@@ -62,6 +69,8 @@ export class UserController {
         return result
     }
 
+
+
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
@@ -69,9 +78,7 @@ export class UserController {
     async deleteUserAsAdmin(
         @Param('email') email: string
     ){
-        const result = await this.userService.deleteUserAsAdmin(email)
-        console.log("DELETE USER AS ADMIN : ", result)
-        return result
+        await this.userService.deleteUserAsAdmin(email)
     }
 
     // Elimino estos endpoints por ahora
