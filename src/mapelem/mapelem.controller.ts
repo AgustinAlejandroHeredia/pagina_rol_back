@@ -20,7 +20,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('mapelem')
 export class MapelemController {
 
+
+
     constructor(private readonly mapElemService: MapelemService) {}
+
+
 
     // CREACION
     @ApiBearerAuth('access-token')
@@ -38,8 +42,10 @@ export class MapelemController {
             throw new BadRequestException('Only png, jpg or jpeg files are allowed')
         }
         console.log('BODY DE CREATE MAPELEM -> ', createData)
-        return this.mapElemService.createMapElem(createData, campaignId, file)
+        await this.mapElemService.createMapElem(createData, campaignId, file)
     }
+
+
 
     // GET MAP ELEMS by CAMPAIGNID and LAYER
     @ApiBearerAuth('access-token')
@@ -53,11 +59,12 @@ export class MapelemController {
         if (!Types.ObjectId.isValid(campaignId)) {
             throw new BadRequestException('Invalid campaignId');
         }
-
         const result = await this.mapElemService.getMapsElemsByCampaignIdAndLayer(campaignId, Number(layer))
         console.log("RESULTADO getMapElems : ", JSON.stringify(result, null, 2))
         return result
     }
+
+
 
     // UPDATE
     @ApiBearerAuth('access-token')
@@ -71,12 +78,11 @@ export class MapelemController {
         if (!Types.ObjectId.isValid(mapElemId)) {
             throw new BadRequestException('Invalid campaignId');
         }
-
-        const result = await this.mapElemService.updateMapElem(mapElemId, updateData)
-        console.log("RESULTADO updateMapElem : ", JSON.stringify(result, null, 2))
-        return result
+        await this.mapElemService.updateMapElem(mapElemId, updateData)
     }
 
+
+    
     // DELETE
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -89,10 +95,7 @@ export class MapelemController {
         if (!Types.ObjectId.isValid(mapElemId)) {
             throw new BadRequestException('Invalid campaignId');
         }
-
-        const result = await this.mapElemService.deleteMapElem(mapElemId, pictureId)
-        console.log("RESULTADO deleteMapElem : ", JSON.stringify(result, null, 2))
-        return result
+        await this.mapElemService.deleteMapElem(mapElemId, pictureId)
     }
 
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 // DTOs
 import { CreateMapElemDto } from './dto/create-mapelem.dto';
@@ -18,10 +18,14 @@ import { BackblazeService } from 'src/backblaze/backblaze.service';
 @Injectable()
 export class MapelemService {
 
+
+
     constructor(
         @InjectModel(MapElem.name) private mapElemModel: Model<MapElem>,
         private readonly backblazeService: BackblazeService,
     ){}
+
+
 
     async createMapElem(createMapElemDto: CreateMapElemDto, campaignId:string, file: Express.Multer.File){
 
@@ -39,8 +43,10 @@ export class MapelemService {
             campaignId: new Types.ObjectId(campaignId)
         })
 
-        return newMapElem.save()
+        console.log("CREATE MAP ELEM RESULT : ", newMapElem)
     }
+
+
 
     async getMapsElemsByCampaignIdAndLayer(campaignId: string, layer: number){
         return this.mapElemModel
@@ -53,13 +59,18 @@ export class MapelemService {
             .lean()
     }
 
+
+
     async updateMapElem(mapElemId: string, updateData: UpdateMapElemDto){
-        return this.mapElemModel.findByIdAndUpdate(
+        const result = await this.mapElemModel.findByIdAndUpdate(
             mapElemId,
             {$set: updateData},
             {new: true},
         ).lean()
+        console.log("RESULTADO updateMapElem : ", JSON.stringify(result, null, 2))
     }
+
+
 
     async deleteMapElem(mapElemId: string, pictureId: string){
         const deletedElem = this.mapElemModel.findByIdAndDelete(mapElemId).lean()
@@ -68,9 +79,14 @@ export class MapelemService {
             return deletedElem
         }
 
-        await this.backblazeService.deleteFile(pictureId)
+        console.log("RESULTADO deleteMapElem : ", JSON.stringify(deletedElem, null, 2))
 
-        return deletedElem
+        try {
+            await this.backblazeService.deleteFile(pictureId)
+        } catch (error) {
+            console.error(error)
+            throw new InternalServerErrorException('Error deleting map elem data from file storage')
+        }
     }
 
 }
