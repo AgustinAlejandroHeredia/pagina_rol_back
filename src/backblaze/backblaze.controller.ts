@@ -15,6 +15,9 @@ import { Permissions } from 'src/auth/permissions.decorator';
 import { User } from 'src/auth/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 
+// MONGOOSE
+import { Types } from 'mongoose';
+
 @ApiTags('Backblaze')
 @Controller('backblaze')
 
@@ -27,9 +30,13 @@ BACKEND DESIGN RULE:
 
 export class BackblazeController {
 
+
+
     constructor(
         private readonly backblazeService: BackblazeService,
     ){}
+
+
 
     // Se usa para crear la estructura de archivos en Backblaze para trabajar luego
     @ApiBearerAuth('access-token')
@@ -42,9 +49,13 @@ export class BackblazeController {
         if (!campaignId) {
             throw new BadRequestException('Missing campaign id');
         }
-
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         return this.backblazeService.initializeCampaignStorage(campaignId);
     }
+
+
 
     // Crea una carpeta con el nombre dado en la campaña que se indica
     @ApiBearerAuth('access-token')
@@ -58,13 +69,16 @@ export class BackblazeController {
         if (!campaignId) {
             throw new BadRequestException('Missing campaign id');
         }
-
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         if (!folderName) {
             throw new BadRequestException('Missing folder name');
         }
-
         return this.backblazeService.createFolder(campaignId, folderName)
     }
+
+
 
     // dado un archivo (SOLO png, jpeg y pdf) lo sube a la carpeta de la campaña indicada
     @ApiBearerAuth('access-token')
@@ -86,11 +100,9 @@ export class BackblazeController {
 
                 cb(null, true);
             },
-            /*
             limits: {
                 fileSize: 10 * 1024 * 1024, // 10mb
             },
-            */
         }),
     )
     async uploadFile(
@@ -101,17 +113,19 @@ export class BackblazeController {
         if (!files) {
             throw new BadRequestException('Missing file');
         }
-
         if (!campaignId) {
             throw new BadRequestException('Missing campaign id');
         }
-
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         if (!folder) {
             throw new BadRequestException('Missing folder name');
         }
-
         return this.backblazeService.uploadFiles(files, campaignId, folder)
     }
+
+
 
     // Borra la carpeta que este dentro de la campaña indicada
     @ApiBearerAuth('access-token')
@@ -125,13 +139,16 @@ export class BackblazeController {
         if (!campaignId) {
             throw new BadRequestException('Missing campaign id');
         }
-
+        if(!Types.ObjectId.isValid(campaignId)) {
+            throw new BadRequestException('Invalid campaign id')
+        }
         if (!folderName) {
             throw new BadRequestException('Missing folder name');
         }
-
         return this.backblazeService.deleteFolder(campaignId, folderName)
     }
+
+
 
     // Borra el archivo dentro de la carpeta en la campaña indicada
     @ApiBearerAuth('access-token')
@@ -144,9 +161,10 @@ export class BackblazeController {
         if (!fileId) {
             throw new BadRequestException('Missing file id');
         }
-
         return this.backblazeService.deleteFile(fileId)
     }
+
+
 
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -159,6 +177,8 @@ export class BackblazeController {
         console.log("RESULTADO getCompendiumFiles : ", result)
         return result
     }
+
+
 
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
@@ -174,6 +194,8 @@ export class BackblazeController {
         res.setHeader('Content-Disposition', `inline; filename="${file.fileName}"`)
         res.send(file.data)
     }
+
+
 
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
