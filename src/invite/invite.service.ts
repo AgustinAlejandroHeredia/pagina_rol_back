@@ -159,7 +159,7 @@ export class InviteService {
 
     async getInvitesAsAdmin() {
         return this.inviteModel
-            .find({}, { _id: 0, from_mongo_id: 0, for_mongo_id: 0 })
+            .find({}, { from_mongo_id: 0, for_mongo_id: 0 })
             .lean()
             .exec()
     }

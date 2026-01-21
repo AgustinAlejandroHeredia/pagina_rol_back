@@ -169,6 +169,8 @@ export class CampaignController {
         return result
     }
 
+    // ADMIN
+
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
@@ -176,6 +178,31 @@ export class CampaignController {
     async getCampaignsAsAdmin(){
         const result = await this.campaignService.getCampaignsAsAdmin()
         console.log("CAMPAIGNS AS ADMIN : ", result)
+        return result
+    }
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Delete("/admin/deleteCampaignAsAdmin/:campaignId")
+    async deleteCampaignAsAdmin(
+        @Param('campaignId') campaignId: string,
+    ){
+        const result = await this.campaignService.deleteCampaign(campaignId)
+        console.log("DELETE CAMPAIGN AS ADMIN : ", result)
+        return result
+    }
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Delete("/admin/kickPlayerAsAdmin/:campaignId/:alias")
+    async kickPlayerAsAdmin(
+        @Param('campaignId') campaignId: string,
+        @Param('alias') alias: string,
+    ){
+        const result = await this.campaignService.kickPlayer(campaignId, alias)
+        console.log("QUICK PLAYER AS ADMIN : ", JSON.stringify(result, null, 2))
         return result
     }
 

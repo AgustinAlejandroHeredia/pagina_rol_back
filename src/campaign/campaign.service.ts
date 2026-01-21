@@ -271,11 +271,86 @@ export class CampaignService {
             .lean();
     }
 
-    async getCampaignsAsAdmin(){
-        return this.campaignModel
-            .find({}, { _mapId: 0 })
-            .lean()
-            .exec()
-    }
+    async getCampaignsAsAdmin() {
+        return this.campaignModel.aggregate([
+            // ===== Dungeon Master =====
+            {
+            $lookup: {
+                from: 'users',
+                localField: 'dungeonMaster.auth0_id',
+                foreignField: 'auth0_id',
+                as: 'dmUser'
+            }
+            },
+            {
+            $addFields: {
+                dungeonMaster: {
+                $mergeObjects: [
+                    '$dungeonMaster',
+                    {
+                    email: { $arrayElemAt: ['$dmUser.email', 0] }
+                    }
+                ]
+                }
+            }
+            },
+
+            // ===== Campaign Users =====
+            {
+            $lookup: {
+                from: 'users',
+                localField: 'users.auth0_id',
+                foreignField: 'auth0_id',
+                as: 'usersData'
+            }
+            },
+            {
+            $addFields: {
+                users: {
+                $map: {
+                    input: '$users',
+                    as: 'u',
+                    in: {
+                    $mergeObjects: [
+                        '$$u',
+                        {
+                        email: {
+                            $arrayElemAt: [
+                            {
+                                $map: {
+                                input: {
+                                    $filter: {
+                                    input: '$usersData',
+                                    as: 'ud',
+                                    cond: {
+                                        $eq: ['$$ud.auth0_id', '$$u.auth0_id']
+                                    }
+                                    }
+                                },
+                                as: 'f',
+                                in: '$$f.email'
+                                }
+                            },
+                            0
+                            ]
+                        }
+                        }
+                    ]
+                    }
+                }
+                }
+            }
+            },
+
+            // ===== Limpieza =====
+            {
+            $project: {
+                dmUser: 0,
+                usersData: 0,
+                _mapId: 0
+            }
+            }
+        ])
+        }
 
 }

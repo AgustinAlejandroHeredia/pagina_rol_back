@@ -61,11 +61,17 @@ export class UserService {
             .exec()
     }
 
+    // ADMIN
+
     async getUsersAsAdmin() {
         return this.userModel
             .find({}, { _id: 0, auth0_id: 0 })
             .lean()
             .exec()
+    }
+
+    async deleteUserAsAdmin(email: string) {
+        console.log("-- NOT IMPLEMENTED YET --")
     }
 
 }

@@ -13,7 +13,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 
 // SWAGGER
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -23,6 +23,7 @@ export class MapelemController {
     constructor(private readonly mapElemService: MapelemService) {}
 
     // CREACION
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post(':campaignId')
@@ -41,6 +42,7 @@ export class MapelemController {
     }
 
     // GET MAP ELEMS by CAMPAIGNID and LAYER
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('getMapsElemsByCampaignIdAndLayer/:campaignId')
@@ -58,6 +60,7 @@ export class MapelemController {
     }
 
     // UPDATE
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Patch(':mapElemId')
@@ -75,6 +78,7 @@ export class MapelemController {
     }
 
     // DELETE
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Delete(':mapElemId')

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ConflictException, Controller, Get, InternalServerErrorException, Param, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Delete, Get, InternalServerErrorException, Param, Post, UseGuards } from '@nestjs/common';
 import { InviteService } from './invite.service';
 import { UserService } from 'src/user/user.service';
 import { CampaignService } from 'src/campaign/campaign.service';
@@ -21,6 +21,7 @@ export class InviteController {
     ){}
 
     // CREACION
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post()
@@ -71,6 +72,7 @@ export class InviteController {
     }
 
     // JOIN CAMPAIGN
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('/joinCampaign/:token/:alias')
@@ -89,6 +91,18 @@ export class InviteController {
     async getInvitesAsAdmin(){
         const result = await this.inviteService.getInvitesAsAdmin()
         console.log("INVITES AS ADMIN : ", result)
+        return result
+    }
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Delete("/admin/deleteInviteAsAdmin/:inviteId")
+    async deleteInviteAsAdmin(
+        @Param('inviteId') inviteId: string
+    ){
+        const result = await this.inviteService.deleteInvite(inviteId)
+        console.log("DELETE INVITE AS ADMIN : ", result)
         return result
     }
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -19,13 +19,16 @@ import { User } from 'src/auth/user.decorator';
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
+    /*
     @Post()
     @ApiBody({ type: CreateUserDto })
     async createUser(@Body() createData: CreateUserDto){
         console.log('BODY DE CREATE USER -> ', createData)
         return this.userService.createUser(createData)
     }
+    */
 
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post("/userExists")
@@ -47,6 +50,8 @@ export class UserController {
         return { ok: true}
     }
 
+    // ADMIN
+
     @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('admin:page')
@@ -54,6 +59,18 @@ export class UserController {
     async getUsersAsAdmin(){
         const result = await this.userService.getUsersAsAdmin()
         console.log("USERS AS ADMIN : ", result)
+        return result
+    }
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('admin:page')
+    @Delete("admin/deleteUserAsAdmin/:email")
+    async deleteUserAsAdmin(
+        @Param('email') email: string
+    ){
+        const result = await this.userService.deleteUserAsAdmin(email)
+        console.log("DELETE USER AS ADMIN : ", result)
         return result
     }
 

@@ -32,6 +32,7 @@ export class BackblazeController {
     ){}
 
     // Se usa para crear la estructura de archivos en Backblaze para trabajar luego
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post('initialize/:campaignId')
@@ -46,6 +47,7 @@ export class BackblazeController {
     }
 
     // Crea una carpeta con el nombre dado en la campaña que se indica
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post('createFolder')
@@ -65,6 +67,7 @@ export class BackblazeController {
     }
 
     // dado un archivo (SOLO png, jpeg y pdf) lo sube a la carpeta de la campaña indicada
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post('uploadFile/:campaignId')
@@ -111,6 +114,7 @@ export class BackblazeController {
     }
 
     // Borra la carpeta que este dentro de la campaña indicada
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Delete('deleteFolder/:campaignId/:folderName')
@@ -130,6 +134,7 @@ export class BackblazeController {
     }
 
     // Borra el archivo dentro de la carpeta en la campaña indicada
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Delete('deleteFile/:fileId')
@@ -143,6 +148,7 @@ export class BackblazeController {
         return this.backblazeService.deleteFile(fileId)
     }
 
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('compendium/:campaignId')
@@ -154,6 +160,7 @@ export class BackblazeController {
         return result
     }
 
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('getFileById/:fileId')
@@ -168,6 +175,7 @@ export class BackblazeController {
         res.send(file.data)
     }
 
+    @ApiBearerAuth('access-token')
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Post('uploadCampaignMap/:campaignId')
