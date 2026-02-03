@@ -125,12 +125,12 @@ export class CampaignController {
     @UseGuards(AuthGuard('jwt'), PermissionGuard)
     @Permissions('read:campaign')
     @Get('/get_campaign_users/:campaignId')
-    async getUsersCampaign(@Param('campaignId') campaignId: string){
+    async getCampaignUsers(@Param('campaignId') campaignId: string){
         if(!Types.ObjectId.isValid(campaignId)) {
             throw new BadRequestException('Invalid campaign id')
         }
-        const result = await this.campaignService.getUsersCampaign(campaignId)
-        console.log("RESULTADO getUsersCampaign ; ", JSON.stringify(result, null, 2))
+        const result = await this.campaignService.getCampaignUsers(campaignId)
+        console.log("RESULTADO getCampaignUsers ; ", JSON.stringify(result, null, 2))
         return result
     }
 

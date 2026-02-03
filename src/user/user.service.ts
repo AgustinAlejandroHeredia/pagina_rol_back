@@ -27,25 +27,53 @@ export class UserService {
 
 
 
+    // NEW
+    async userEmailExists(email: string){
+        return this.userModel.findOne({ email }).exec()
+    }
+
+
+
+    // NEW
+    async userAuth0EmailExists(userId: string, email: string){
+        return this.userModel.findOne({
+            auth0_id: userId,
+            email: email,
+        }).exec()
+    }
+
+
+
+    // NEW
+    async createNewUser(auth0_id: string, name: string, email: string) {
+        const newUser = new this.userModel({
+            auth0_id,
+            name,
+            email,
+        })
+        return newUser.save()
+    }
+
+
+
+    // NEW
+    async linkAccounts() {
+
+    }
+
+
+
     async findOrCreateUser(
         auth0_id: string,
         name: string,
         email: string,
     ) {
-        return this.userModel.findOneAndUpdate(
-            { auth0_id },
-            {
-            $setOnInsert: {
-                auth0_id,
-                name,
-                email,
-            },
-            },
-            {
-            upsert: true,
-            new: true,
-            },
-        ).exec();
+        const result = this.userEmailExists(email)
+        if(!result){
+            this.createNewUser(auth0_id, name, email)
+        }else{
+            return 
+        }
     }
 
 
@@ -53,15 +81,6 @@ export class UserService {
     async getUserByAuth0Id(auth0_id: string) {
         return this.userModel
             .findOne({ auth0_id })
-            .lean()
-            .exec()
-    }
-
-
-
-    async userEmailExists(email: string) {
-        return this.userModel
-            .findOne({ email })
             .lean()
             .exec()
     }

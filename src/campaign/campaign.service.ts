@@ -226,7 +226,7 @@ export class CampaignService {
 
 
 
-    async getUsersCampaign(campaign_id: string) {
+    async getCampaignUsers(campaign_id: string) {
         return this.campaignModel
             .aggregate([
                 {

@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 // MONGOOSE
 import { InjectModel } from '@nestjs/mongoose';
@@ -152,19 +152,36 @@ export class InviteService {
 
 
     async getInviteByToken(token: string) {
-        return this.inviteModel
-            .findOne(
-                { "token": token }
-            )
+
+        if (!token) {
+            throw new BadRequestException('Token is required')
+        }
+
+        const sanitizedToken = token.trim().toUpperCase()
+
+        const TOKEN_REGEX = /^[A-Z0-9]{6}$/
+
+        if (!TOKEN_REGEX.test(sanitizedToken)) {
+            throw new BadRequestException('Invalid token format')
+        }
+
+        const invite = await this.inviteModel
+            .findOne({ token: sanitizedToken })
             .lean()
             .exec()
+
+        if (!invite) {
+            throw new NotFoundException('Invite not found')
+        }
+
+        return invite
     }
 
 
 
     async deleteInvite(inviteId: string) {
         const result = await this.inviteModel.findByIdAndDelete(inviteId)
-        console.log("DELETE INVITE AS ADMIN : ", result)
+        console.log("DELETE INVITE : ", result)
     }
 
 

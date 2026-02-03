@@ -22,15 +22,6 @@ export class UserController {
 
     constructor(private readonly userService: UserService) {}
 
-    /*
-    @Post()
-    @ApiBody({ type: CreateUserDto })
-    async createUser(@Body() createData: CreateUserDto){
-        console.log('BODY DE CREATE USER -> ', createData)
-        return this.userService.createUser(createData)
-    }
-    */
-
 
 
     @ApiBearerAuth('access-token')
@@ -53,6 +44,44 @@ export class UserController {
         )
 
         return { ok: true }
+    }
+
+
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get("/userEmailExists/:email")
+    async userEmailExists(
+        @Param('email') email: string,
+    ){
+        return await this.userService.userEmailExists(email)
+    }
+
+
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Get("/userAuth0EmailExists/:email")
+    async userAuth0EmailExists(
+        @User('userId') userId: string,
+        @Param('email') email: string,
+    ){
+        return await this.userService.userAuth0EmailExists(userId, email)
+    }
+
+
+
+    @ApiBearerAuth('access-token')
+    @UseGuards(AuthGuard('jwt'), PermissionGuard)
+    @Permissions('read:campaign')
+    @Post("/createNewUser")
+    async createNewUser(
+        @User('userId') userId: string,
+        @Body() body: { name: string, email: string }
+    ){
+        await this.userService.createNewUser(userId, body.name, body.email)
     }
 
 

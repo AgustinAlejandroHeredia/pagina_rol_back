@@ -43,7 +43,9 @@ export class MapelemService {
             campaignId: new Types.ObjectId(campaignId)
         })
 
-        console.log("CREATE MAP ELEM RESULT : ", newMapElem)
+        const savedMapElem = await newMapElem.save()
+
+        console.log("CREATE MAP ELEM RESULT : ", savedMapElem)
     }
 
 
